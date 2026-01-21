@@ -308,10 +308,13 @@ function createPopupContent(facility) {
             </div>
             <div class="popup-actions">
                 <button class="popup-btn" onclick="getDirections(${facility.latitude}, ${facility.longitude}, '${facility.name}')">
-                    🧭 Yol Tarifi Al
+                    🧭 Yol Tarifi
+                </button>
+                <button class="popup-btn" onclick="window.open('https://www.google.com/maps/search/?api=1&query=${facility.latitude},${facility.longitude}', '_blank')" style="background: linear-gradient(135deg, #4285f4 0%, #3367d6 100%);">
+                    📍 Harita Detay
                 </button>
                 <button class="popup-btn" onclick="window.open('https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${facility.latitude},${facility.longitude}&heading=0&pitch=0&fov=80', '_blank')" style="background: linear-gradient(135deg, #34a853 0%, #0f9d58 100%);">
-                    🗺️ Haritada Göster
+                    🏙️ Sokak Görünümü
                 </button>
             </div>
         </div>
