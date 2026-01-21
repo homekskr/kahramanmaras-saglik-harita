@@ -368,7 +368,15 @@ function renderFacilityDetails(facility) {
             <div class="details-actions">
                 <a href="https://www.google.com/maps/dir/?api=1&destination=${facility.latitude},${facility.longitude}" 
                    target="_blank" class="details-btn">
-                    🧭 Yol Tarifi Al
+                    🧭 Yol Tarifi
+                </a>
+                <a href="https://www.google.com/maps/search/?api=1&query=${facility.latitude},${facility.longitude}&basemap=satellite" 
+                   target="_blank" class="details-btn" style="background: linear-gradient(135deg, #4285f4 0%, #3367d6 100%);">
+                    📍 Harita Detay
+                </a>
+                <a href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${facility.latitude},${facility.longitude}&heading=0&pitch=0&fov=80" 
+                   target="_blank" class="details-btn" style="background: linear-gradient(135deg, #34a853 0%, #0f9d58 100%);">
+                    🏙️ Sokak Görünümü
                 </a>
             </div>
         </div>
