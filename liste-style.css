@@ -30,7 +30,7 @@ body {
 .header {
     background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
     color: white;
-    padding: 1rem 0;
+    padding: 0.6rem 0;
     box-shadow: 0 2px 8px var(--shadow);
     position: sticky;
     top: 0;
@@ -40,31 +40,31 @@ body {
 .header-content {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 0 1.5rem;
+    padding: 0 1rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
 .header-left {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     flex: 1;
     min-width: 0;
     /* Allow text truncation */
 }
 
 .header-logo {
-    height: 2.5rem;
+    height: 2rem;
     width: auto;
     flex-shrink: 0;
     /* Prevent logo from shrinking */
 }
 
 .header-title {
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 700;
     margin: 0;
     white-space: nowrap;
@@ -73,13 +73,13 @@ body {
 }
 
 .header-btn {
-    padding: 0.5rem 1.25rem;
+    padding: 0.4rem 1rem;
     background: rgba(255, 255, 255, 0.2);
     color: white;
     border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
+    border-radius: 6px;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     text-decoration: none;
     transition: all 0.3s;
     backdrop-filter: blur(10px);
@@ -98,43 +98,43 @@ body {
 .container {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 2rem 1.5rem;
+    padding: 1rem;
 }
 
 /* Filters Section */
 .filters-section {
     background: var(--white);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
     box-shadow: 0 1px 3px var(--shadow);
 }
 
 .filters-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
 }
 
 .filter-group {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.35rem;
 }
 
 .filter-group label {
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     color: var(--text);
 }
 
 .filter-select,
 .search-input {
-    padding: 0.75rem;
+    padding: 0.5rem;
     border: 2px solid var(--border);
-    border-radius: 8px;
-    font-size: 0.9rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
     font-family: inherit;
     transition: all 0.3s;
     background: var(--white);
@@ -150,16 +150,16 @@ body {
 .filter-actions {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
     flex-wrap: wrap;
 }
 
 .btn {
-    padding: 0.75rem 1.5rem;
+    padding: 0.5rem 1.25rem;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     cursor: pointer;
     transition: all 0.3s;
     font-family: inherit;
@@ -190,19 +190,19 @@ body {
     margin-left: auto;
     font-weight: 600;
     color: var(--text-light);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
 }
 
 .results-count span {
     color: var(--primary);
-    font-size: 1.25rem;
+    font-size: 1.1rem;
 }
 
 /* Table Section */
 .table-section {
     background: var(--white);
-    border-radius: 12px;
-    padding: 1.5rem;
+    border-radius: 8px;
+    padding: 1rem;
     box-shadow: 0 1px 3px var(--shadow);
 }
 
@@ -213,7 +213,7 @@ body {
 .facilities-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .facilities-table thead {
@@ -222,10 +222,11 @@ body {
 }
 
 .facilities-table th {
-    padding: 1rem;
+    padding: 0.65rem 0.75rem;
     text-align: left;
     font-weight: 600;
     white-space: nowrap;
+    font-size: 0.8rem;
 }
 
 .facilities-table tbody tr {
@@ -238,23 +239,23 @@ body {
 }
 
 .facilities-table td {
-    padding: 1rem;
+    padding: 0.65rem 0.75rem;
     vertical-align: top;
 }
 
 .action-column {
     text-align: center;
-    width: 150px;
+    width: 140px;
 }
 
 .map-btn {
-    padding: 0.5rem 1rem;
+    padding: 0.4rem 0.85rem;
     background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 5px;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     cursor: pointer;
     transition: all 0.3s;
     white-space: nowrap;
