@@ -108,9 +108,21 @@ function setupEventListeners() {
     const applyBtn = document.getElementById('applyFiltersBtn');
     const clearBtn = document.getElementById('clearFiltersBtn');
     const searchInput = document.getElementById('searchInput');
+    const districtFilter = document.getElementById('districtFilter');
+    const typeFilter = document.getElementById('typeFilter');
 
     applyBtn.addEventListener('click', applyFilters);
     clearBtn.addEventListener('click', clearFilters);
+
+    // Cascade filtering - update dependent dropdowns
+    districtFilter.addEventListener('change', () => {
+        updateTypeFilter();
+        updateFacilityFilter();
+    });
+
+    typeFilter.addEventListener('change', () => {
+        updateFacilityFilter();
+    });
 
     // Akıllı arama - debounced
     let searchTimeout;
@@ -120,6 +132,69 @@ function setupEventListeners() {
             applyFilters();
         }, 300);
     });
+}
+
+// Tür filtresini güncelle (seçili ilçeye göre)
+function updateTypeFilter() {
+    const districtId = document.getElementById('districtFilter').value;
+    const typeFilter = document.getElementById('typeFilter');
+    const currentTypeId = typeFilter.value;
+
+    // Seçili ilçeye göre mevcut türleri bul
+    let availableTypes = facilityTypes;
+
+    if (districtId) {
+        const facilitiesInDistrict = allFacilities.filter(f => f.district_id == districtId);
+        const typeIds = [...new Set(facilitiesInDistrict.map(f => f.facility_type_id))];
+        availableTypes = facilityTypes.filter(t => typeIds.includes(t.id));
+    }
+
+    // Dropdown'ı yeniden doldur
+    typeFilter.innerHTML = '<option value="">Tüm Türler</option>';
+    availableTypes.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type.id;
+        option.textContent = `${type.icon || '🏥'} ${type.name}`;
+        if (type.id == currentTypeId) option.selected = true;
+        typeFilter.appendChild(option);
+    });
+}
+
+// Tesis filtresini güncelle (seçili ilçe ve türe göre)
+function updateFacilityFilter() {
+    const districtId = document.getElementById('districtFilter').value;
+    const typeId = document.getElementById('typeFilter').value;
+    const facilityFilter = document.getElementById('facilityFilter');
+    const currentFacilityId = facilityFilter.value;
+
+    // Seçili ilçe ve türe göre mevcut tesisleri bul
+    let availableFacilities = allFacilities.filter(facility => {
+        const matchesDistrict = !districtId || facility.district_id == districtId;
+        const matchesType = !typeId || facility.facility_type_id == typeId;
+        return matchesDistrict && matchesType;
+    });
+
+    // Alfabetik sırala
+    availableFacilities.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+
+    // Dropdown'ı yeniden doldur
+    facilityFilter.innerHTML = '<option value="">Tesis Seçiniz</option>';
+
+    if (availableFacilities.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Tesis bulunamadı';
+        option.disabled = true;
+        facilityFilter.appendChild(option);
+    } else {
+        availableFacilities.forEach(facility => {
+            const option = document.createElement('option');
+            option.value = facility.id;
+            option.textContent = facility.name;
+            if (facility.id == currentFacilityId) option.selected = true;
+            facilityFilter.appendChild(option);
+        });
+    }
 }
 
 // Filtreleri uygula
@@ -153,6 +228,10 @@ function clearFilters() {
     document.getElementById('typeFilter').value = '';
     document.getElementById('facilityFilter').value = '';
     document.getElementById('searchInput').value = '';
+
+    // Tüm dropdown'ları yeniden doldur
+    updateTypeFilter();
+    updateFacilityFilter();
 
     filteredFacilities = [...allFacilities];
     renderTable();
