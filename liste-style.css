@@ -1,0 +1,330 @@
+/* Liste Sayfası Stilleri */
+
+:root {
+    --primary: #667eea;
+    --secondary: #764ba2;
+    --success: #10b981;
+    --danger: #ef4444;
+    --text: #1f2937;
+    --text-light: #6b7280;
+    --border: #e5e7eb;
+    --bg: #f9fafb;
+    --white: #ffffff;
+    --shadow: rgba(0, 0, 0, 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+}
+
+/* Header */
+.header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: white;
+    padding: 1rem 0;
+    box-shadow: 0 2px 8px var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-logo {
+    height: 2.5rem;
+    width: auto;
+}
+
+.header-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.header-btn {
+    padding: 0.5rem 1.25rem;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: all 0.3s;
+    backdrop-filter: blur(10px);
+}
+
+.header-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+/* Container */
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+/* Filters Section */
+.filters-section {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 1px 3px var(--shadow);
+}
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-group label {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text);
+}
+
+.filter-select,
+.search-input {
+    padding: 0.75rem;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: all 0.3s;
+    background: var(--white);
+}
+
+.filter-select:focus,
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: inherit;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: var(--white);
+    color: var(--text);
+    border: 2px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background: var(--bg);
+    border-color: var(--text-light);
+}
+
+.results-count {
+    margin-left: auto;
+    font-weight: 600;
+    color: var(--text-light);
+    font-size: 0.95rem;
+}
+
+.results-count span {
+    color: var(--primary);
+    font-size: 1.25rem;
+}
+
+/* Table Section */
+.table-section {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px var(--shadow);
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.facilities-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.facilities-table thead {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: white;
+}
+
+.facilities-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.facilities-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+}
+
+.facilities-table tbody tr:hover {
+    background: var(--bg);
+}
+
+.facilities-table td {
+    padding: 1rem;
+    vertical-align: top;
+}
+
+.action-column {
+    text-align: center;
+    width: 150px;
+}
+
+.map-btn {
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.map-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* Loading */
+.loading-row td {
+    text-align: center;
+    padding: 3rem;
+}
+
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    color: var(--text-light);
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-light);
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header-title {
+        font-size: 1rem;
+    }
+
+    .header-logo {
+        height: 2rem;
+    }
+
+    .filters-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .results-count {
+        margin-left: 0;
+        text-align: center;
+    }
+
+    .facilities-table {
+        font-size: 0.8rem;
+    }
+
+    .facilities-table th,
+    .facilities-table td {
+        padding: 0.75rem 0.5rem;
+    }
+}

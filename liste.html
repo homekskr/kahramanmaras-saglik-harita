@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Kahramanmaraş Sağlık Tesisleri Listesi">
+
+    <title>Sağlık Tesisleri Listesi - Kahramanmaraş</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+
+    <!-- Apple PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Sağlık Harita">
+    <link rel="apple-touch-icon" href="/assets/images/icon-192.png">
+
+    <!-- Icons -->
+    <link rel="icon" href="/assets/images/icon-192.png">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Liste CSS -->
+    <link rel="stylesheet" href="liste-style.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <img src="assets/images/logo.png" alt="Logo" class="header-logo">
+                <h1 class="header-title">Kahramanmaraş Kamu Sağlık Tesisleri</h1>
+            </div>
+            <div class="header-right">
+                <a href="/" class="header-btn">
+                    🗺️ Harita Görünümü
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="container">
+        <!-- Filters Section -->
+        <section class="filters-section">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label for="districtFilter">İlçe</label>
+                    <select id="districtFilter" class="filter-select">
+                        <option value="">Tüm İlçeler</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="typeFilter">Sağlık Tesisi Türü</label>
+                    <select id="typeFilter" class="filter-select">
+                        <option value="">Tüm Türler</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="facilityFilter">Sağlık Tesisi Adı</label>
+                    <select id="facilityFilter" class="filter-select">
+                        <option value="">Tesis Seçiniz</option>
+                    </select>
+                </div>
+
+                <div class="filter-group search-group">
+                    <label for="searchInput">Akıllı Arama</label>
+                    <input type="text" id="searchInput" class="search-input"
+                        placeholder="Tesis adı, ilçe veya tür ara...">
+                </div>
+            </div>
+
+            <div class="filter-actions">
+                <button id="applyFiltersBtn" class="btn btn-primary">
+                    🔍 Filtrele
+                </button>
+                <button id="clearFiltersBtn" class="btn btn-secondary">
+                    🔄 Temizle
+                </button>
+                <div class="results-count">
+                    <span id="resultsCount">0</span> tesis bulundu
+                </div>
+            </div>
+        </section>
+
+        <!-- Table Section -->
+        <section class="table-section">
+            <div class="table-container">
+                <table class="facilities-table">
+                    <thead>
+                        <tr>
+                            <th>İlçe</th>
+                            <th>Tesis Türü</th>
+                            <th>Tesis Adı</th>
+                            <th>Adres</th>
+                            <th class="action-column">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody id="facilitiesTableBody">
+                        <tr class="loading-row">
+                            <td colspan="5">
+                                <div class="loading-spinner">
+                                    <div class="spinner"></div>
+                                    <span>Yükleniyor...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="assets/js/config.js"></script>
+    <script src="liste.js"></script>
+</body>
+
+</html>
