@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Sağlık Tesisleri Yönetimi</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Admin CSS -->
+    <link rel="stylesheet" href="assets/css/admin.css">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="../assets/images/hospital-icon.svg">
+</head>
+
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <div class="login-header">
+                <svg class="login-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
+                </svg>
+                <h1>Admin Panel</h1>
+                <p>Sağlık Tesisleri Yönetim Sistemi</p>
+            </div>
+
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="email">E-posta</label>
+                    <input type="email" id="email" name="email" required placeholder="admin@example.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Şifre</label>
+                    <input type="password" id="password" name="password" required placeholder="••••••••">
+                </div>
+
+                <div id="loginError" class="error-message" style="display: none;"></div>
+
+                <button type="submit" class="btn btn-primary btn-block">
+                    <span class="btn-text">Giriş Yap</span>
+                    <span class="btn-loader" style="display: none;">
+                        <svg class="spinner" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"
+                                opacity="0.25" />
+                            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="4" fill="none" />
+                        </svg>
+                    </span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="dashboard" style="display: none;">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+                <h2>Admin Panel</h2>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-section="facilities">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16" />
+                        <path d="M3 21h18M9 7h1m4 0h1M9 11h1m4 0h1M9 15h1m4 0h1" />
+                    </svg>
+                    <span>Tesisler</span>
+                </a>
+
+                <a href="#" class="nav-item" data-section="map">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    <span>Harita Görünümü</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                    </div>
+                    <div class="user-details" style="display: none;">
+                        <div class="user-name" id="userName">Admin</div>
+                        <div class="user-email" id="userEmail"></div>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="btn btn-ghost btn-sm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                    Çıkış
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="content-header">
+                <div class="header-left">
+                    <h1 id="pageTitle">Tesis Yönetimi</h1>
+                    <p id="pageSubtitle">Sağlık tesislerini ekleyin, düzenleyin veya silin</p>
+                </div>
+                <div class="header-right">
+                    <button id="importExcelBtn" class="btn btn-ghost" style="margin-right: 12px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        Excel'den İçe Aktar
+                    </button>
+                    <button id="addFacilityBtn" class="btn btn-primary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                        </svg>
+                        Yeni Tesis Ekle
+                    </button>
+                </div>
+            </header>
+
+            <!-- Facilities Section -->
+            <section id="facilitiesSection" class="content-section">
+                <!-- Search and Filter -->
+                <div class="toolbar">
+                    <div class="search-box">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.35-4.35" />
+                        </svg>
+                        <input type="text" id="searchInput" placeholder="Tesis ara...">
+                    </div>
+
+                    <div class="filter-group">
+                        <select id="typeFilter" class="filter-select">
+                            <option value="">TÜM TÜRLER</option>
+                            <option value="İL SAĞLIK MÜDÜRLÜĞÜ">🏛️ İL SAĞLIK MÜDÜRLÜĞÜ</option>
+                            <option value="İL SAĞLIK MÜDÜRLÜĞÜ EK BİNA">🏛️ İL SAĞLIK MÜDÜRLÜĞÜ EK BİNA</option>
+                            <option value="HASTANE">🏥 HASTANE</option>
+                            <option value="HASTANE EK BİNA">🏥 HASTANE EK BİNA</option>
+                            <option value="İLÇE SAĞLIK MÜDÜRLÜĞÜ">🏛️ İLÇE SAĞLIK MÜDÜRLÜĞÜ</option>
+                            <option value="İLÇE SAĞLIK MÜDÜRLÜĞÜ EK BİNA">🏛️ İLÇE SAĞLIK MÜDÜRLÜĞÜ EK BİNA</option>
+                            <option value="TOPLUM SAĞLIĞI MERKEZİ">🏠 TOPLUM SAĞLIĞI MERKEZİ</option>
+                            <option value="AİLE SAĞLIĞI MERKEZİ">👨‍⚕️ AİLE SAĞLIĞI MERKEZİ</option>
+                            <option value="112 ACİL SAĞLIK İSTASYONU">🚑 112 ACİL SAĞLIK İSTASYONU</option>
+                            <option value="AĞIZ VE DİŞ SAĞLIĞI MERKEZİ">🦷 AĞIZ VE DİŞ SAĞLIĞI MERKEZİ</option>
+                            <option value="GÖÇMEN SAĞLIĞI MERKEZİ">🌍 GÖÇMEN SAĞLIĞI MERKEZİ</option>
+                            <option value="SAĞLIKLI HAYAT MERKEZİ">💚 SAĞLIKLI HAYAT MERKEZİ</option>
+                            <option value="VEREM SAVAŞ BİRİMİ">🔬 VEREM SAVAŞ BİRİMİ</option>
+                            <option value="KETEM BİRİMİ">🩺 KETEM BİRİMİ</option>
+                            <option value="SAĞLIK EVİ">🏡 SAĞLIK EVİ</option>
+                            <option value="HALK SAĞLIĞI LABORATUVARI">🔬 HALK SAĞLIĞI LABORATUVARI</option>
+                            <option value="HEMOGLOBİNOPATİ LABORATUVARI">🧬 HEMOGLOBİNOPATİ LABORATUVARI</option>
+                        </select>
+
+                        <button id="refreshBtn" class="btn btn-ghost" title="Yenile">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path
+                                    d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Facilities Table -->
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Tesis Adı</th>
+                                <th>Kurum Kodu</th>
+                                <th>Tür</th>
+                                <th>İlçe</th>
+                                <th>Web Sitesi</th>
+                                <th>E-posta</th>
+                                <th>Telefon</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody id="facilitiesTableBody">
+                            <tr class="loading-row">
+                                <td colspan="8">
+                                    <div class="loading-spinner">
+                                        <svg class="spinner" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
+                                                fill="none" opacity="0.25" />
+                                            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="4"
+                                                fill="none" />
+                                        </svg>
+                                        <span>Yükleniyor...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Map Section -->
+            <section id="mapSection" class="content-section" style="display: none;">
+                <div class="map-container">
+                    <div id="adminMap"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Add/Edit Facility Modal -->
+    <div id="facilityModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Yeni Tesis Ekle</h2>
+                <button class="modal-close" id="closeModal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+
+            <form id="facilityForm" class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="facilityName">Tesis Adı *</label>
+                        <input type="text" id="facilityName" name="name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="facilityKurumKodu">Kurum Kodu</label>
+                        <input type="text" id="facilityKurumKodu" name="kurum_kodu" placeholder="Örn: KM-001"
+                            maxlength="50">
+                        <small>Benzersiz kurum kodu (opsiyonel)</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="facilityType">Sağlık Tesisi Türü *</label>
+                        <select id="facilityType" name="type" required>
+                            <option value="">SEÇİNİZ</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="facilityDistrict">İlçe *</label>
+                        <select id="facilityDistrict" name="district" required>
+                            <option value="">SEÇİNİZ</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="facilityPhone">Telefon</label>
+                        <input type="tel" id="facilityPhone" name="phone" placeholder="0 123 456 78 90" maxlength="15"
+                            autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="facilityWebsite">Web Sitesi</label>
+                        <input type="url" id="facilityWebsite" name="website" placeholder="https://example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="facilityEmail">E-posta Adresi</label>
+                        <input type="email" id="facilityEmail" name="email" placeholder="iletisim@kurum.gov.tr">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="facilityFacebook">Facebook</label>
+                        <input type="url" id="facilityFacebook" name="facebook"
+                            placeholder="https://facebook.com/sayfa">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="facilityInstagram">İnstagram</label>
+                        <input type="url" id="facilityInstagram" name="instagram"
+                            placeholder="https://instagram.com/kullanici">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="facilityTwitter">X (Twitter)</label>
+                        <input type="url" id="facilityTwitter" name="twitter" placeholder="https://x.com/kullanici">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="facilityNsosyal">NSosyal</label>
+                        <input type="url" id="facilityNsosyal" name="nsosyal" placeholder="https://nsosyal.com/profil">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="facilityAddress">Adres *</label>
+                    <textarea id="facilityAddress" name="address" rows="2" required></textarea>
+                    <button type="button" class="btn btn-ghost btn-sm" id="geocodeAddressBtn" style="margin-top: 8px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width: 16px; height: 16px;">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                            <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        Adresi Haritada Bul
+                    </button>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="facilityLat">Enlem</label>
+                        <input type="number" id="facilityLat" name="latitude" step="any" placeholder="37.5847">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="facilityLng">Boylam</label>
+                        <input type="number" id="facilityLng" name="longitude" step="any" placeholder="36.9228">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Konum *</label>
+                    <div class="location-picker">
+                        <div id="locationMap" class="location-map"></div>
+                    </div>
+                    <small>Harita üzerinde tıklayarak konum seçin</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="facilityImage">Görsel URL</label>
+                    <input type="url" id="facilityImage" name="image_url" placeholder="https://example.com/image.jpg">
+                    <small>Opsiyonel: Tesis görseli için URL girin</small>
+                </div>
+
+                <input type="hidden" id="facilityId" name="id">
+            </form>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" id="cancelBtn">İptal</button>
+                <button type="submit" form="facilityForm" class="btn btn-primary" id="saveBtn">
+                    <span class="btn-text">Kaydet</span>
+                    <span class="btn-loader" style="display: none;">
+                        <svg class="spinner" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"
+                                opacity="0.25" />
+                            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="4" fill="none" />
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h2>Tesisi Sil</h2>
+                <button class="modal-close" id="closeDeleteModal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="delete-warning">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path
+                            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                        <line x1="12" y1="9" x2="12" y2="13" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                </div>
+                <p>Bu tesisi silmek istediğinizden emin misiniz?</p>
+                <p class="delete-facility-name" id="deleteFacilityName"></p>
+                <p class="text-muted">Bu işlem geri alınamaz.</p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" id="cancelDeleteBtn">İptal</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <span class="btn-text">Sil</span>
+                    <span class="btn-loader" style="display: none;">
+                        <svg class="spinner" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"
+                                opacity="0.25" />
+                            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="4" fill="none" />
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Excel Import Modal -->
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Excel'den Tesisleri İçe Aktar</h2>
+                <button class="modal-close" id="closeImportModal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="import-instructions">
+                    <h3>📋 Nasıl Kullanılır?</h3>
+                    <ol>
+                        <li>Aşağıdaki "Şablon İndir" butonuna tıklayarak Excel şablonunu indirin</li>
+                        <li>Şablonu doldurun (Tesis Adı, Tür, İlçe, Adres zorunludur)</li>
+                        <li>Doldurduğunuz dosyayı aşağıya yükleyin</li>
+                        <li>"İçe Aktar" butonuna tıklayın</li>
+                    </ol>
+                    <button id="downloadTemplateBtn" class="btn btn-ghost btn-sm" style="margin-top: 12px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width: 16px; height: 16px;">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="17 8 12 3 7 8" />
+                            <line x1="12" y1="3" x2="12" y2="15" />
+                        </svg>
+                        Şablon İndir (Excel)
+                    </button>
+                </div>
+
+                <div class="file-upload-area" id="fileUploadArea">
+                    <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" style="display: none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        style="width: 48px; height: 48px; margin-bottom: 16px;">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    <p><strong>Excel dosyasını buraya sürükleyin</strong></p>
+                    <p style="color: var(--text-secondary); font-size: 14px;">veya</p>
+                    <button type="button" class="btn btn-ghost btn-sm" id="selectFileBtn">Dosya Seç</button>
+                    <p id="selectedFileName" style="margin-top: 12px; color: var(--primary); font-weight: 500;"></p>
+                </div>
+
+                <div id="importProgress" style="display: none; margin-top: 20px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>İçe aktarılıyor...</span>
+                        <span id="progressText">0%</span>
+                    </div>
+                    <div style="background: var(--border); border-radius: 4px; height: 8px; overflow: hidden;">
+                        <div id="progressBar"
+                            style="background: var(--primary); height: 100%; width: 0%; transition: width 0.3s;"></div>
+                    </div>
+                </div>
+
+                <div id="importResults" style="display: none; margin-top: 20px;">
+                    <h3>📊 İçe Aktarma Sonuçları</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0;">
+                        <div style="padding: 12px; background: var(--success-bg); border-radius: 8px;">
+                            <div style="font-size: 24px; font-weight: bold; color: var(--success);" id="successCount">0
+                            </div>
+                            <div style="color: var(--text-secondary); font-size: 14px;">Başarılı</div>
+                        </div>
+                        <div style="padding: 12px; background: var(--error-bg); border-radius: 8px;">
+                            <div style="font-size: 24px; font-weight: bold; color: var(--danger);" id="errorCount">0
+                            </div>
+                            <div style="color: var(--text-secondary); font-size: 14px;">Hatalı</div>
+                        </div>
+                    </div>
+                    <div id="errorList" style="max-height: 200px; overflow-y: auto;"></div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" id="cancelImportBtn">İptal</button>
+                <button type="button" class="btn btn-primary" id="startImportBtn" disabled>
+                    <span class="btn-text">İçe Aktar</span>
+                    <span class="btn-loader" style="display: none;">
+                        <svg class="spinner" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"
+                                opacity="0.25" />
+                            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="4" fill="none" />
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="../assets/js/config.js"></script>
+    <script src="assets/js/admin.js"></script>
+</body>
+
+</html>

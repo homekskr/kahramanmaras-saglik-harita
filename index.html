@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Kahramanmaraş İl Sağlık Müdürlüğü - Sağlık Tesisleri Harita Uygulaması">
+
+    <!-- Cache Control -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <title>Sağlık Tesisleri Harita - Kahramanmaraş</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+
+    <!-- Icons -->
+    <link rel="icon" href="https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Leaflet MarkerCluster CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="header-title">
+                <img src="assets/images/logo.png" alt="Logo" class="header-logo">
+                Kahramanmaraş Kamu Sağlık Tesisleri
+                <span id="facilityCount" class="header-count">(0 Tesis)</span>
+            </h1>
+            <button id="mobileMenuBtn" class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Menü">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <!-- Filters Section -->
+            <div class="sidebar-section">
+                <!-- District Filter -->
+                <div class="form-group">
+                    <label for="districtFilter">İlçe</label>
+                    <select id="districtFilter">
+                        <option value="">Tüm İlçeler</option>
+                    </select>
+                </div>
+
+                <!-- Facility Type Filter -->
+                <div class="form-group">
+                    <label for="typeFilter">Sağlık Tesisi Türü</label>
+                    <select id="typeFilter">
+                        <option value="">Tüm Sağlık Tesisi Türleri</option>
+                    </select>
+                </div>
+
+                <!-- Facility Name Filter -->
+                <div class="form-group">
+                    <label for="facilityNameFilter">Sağlık Tesisi Adı</label>
+                    <select id="facilityNameFilter">
+                        <option value="">Sağlık Tesisi Seçiniz</option>
+                    </select>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-secondary btn-sm" onclick="applyFilters()">
+                        Filtrele
+                    </button>
+                    <button class="btn btn-outline btn-sm" onclick="clearFilters()">
+                        Temizle
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search Section -->
+            <div class="sidebar-section">
+                <div class="search-container">
+                    <div class="form-group">
+                        <input type="text" id="searchInput" placeholder="Sağlık Tesisi Ara..." autocomplete="off">
+                    </div>
+                    <div id="searchSuggestions" class="search-suggestions"></div>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="searchFacility()">
+                    Ara
+                </button>
+            </div>
+
+            <!-- Facility Details View -->
+            <div class="sidebar-section">
+                <h2 class="section-title">
+                    <span class="icon-small">ℹ️</span>
+                    Sağlık Tesisi Bilgileri
+                </h2>
+                <div id="facilityDetails" class="details-view">
+                    <div class="empty-state">
+                        <span class="icon-large">📍</span>
+                        <p>Lütfen haritadan veya listeden bir tesis seçin.</p>
+                    </div>
+                </div>
+            </div>
+
+
+        </aside>
+
+        <!-- Sidebar Overlay (Mobile) -->
+        <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleMobileSidebar()"></div>
+
+        <!-- Map Container -->
+        <main class="map-container">
+            <div id="map"></div>
+
+            <!-- Map Controls -->
+            <div class="map-controls">
+                <button class="control-btn" onclick="centerMap()" title="Merkeze Dön">
+                    <span>🎯</span>
+                </button>
+                <button class="control-btn" onclick="toggleFullscreen()" title="Tam Ekran">
+                    <span>⛶</span>
+                </button>
+                <button class="control-btn" onclick="refreshData()" title="Yenile">
+                    <span>🔄</span>
+                </button>
+            </div>
+
+            <!-- Status Message -->
+            <div id="statusMessage" class="status-message"></div>
+        </main>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Leaflet MarkerCluster JS -->
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/Leaflet.markercluster.js"></script>
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Config & Database Functions -->
+    <script src="assets/js/config.js"></script>
+
+    <!-- App JS -->
+    <script src="app.js"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker kayıtlı'))
+                    .catch(err => console.log('Service Worker hatası:', err));
+            });
+        }
+    </script>
+</body>
+
+</html>
