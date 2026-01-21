@@ -1,11 +1,13 @@
 // Service Worker for PWA
-const CACHE_NAME = 'saglik-tesisleri-v12';
+const CACHE_NAME = 'saglik-tesisleri-v13';
 const urlsToCache = [
     '/',
     '/index.html',
     '/style.css',
     '/app.js',
     '/assets/js/config.js',
+    '/assets/images/icon-192.png',
+    '/assets/images/icon-512.png',
     '/manifest.json',
     'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
     'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',

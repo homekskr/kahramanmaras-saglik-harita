@@ -1,17 +1,30 @@
 {
-  "name": "Sağlık Tesisleri Harita",
+  "name": "Kahramanmaraş Sağlık Tesisleri Haritası",
   "short_name": "Sağlık Harita",
   "description": "Kahramanmaraş İl Sağlık Müdürlüğü - Sağlık Tesisleri Harita Uygulaması",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#667eea",
-  "orientation": "portrait-primary",
+  "orientation": "any",
+  "categories": [
+    "health",
+    "medical",
+    "utilities"
+  ],
   "icons": [
     {
-      "src": "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-      "sizes": "25x41",
-      "type": "image/png"
+      "src": "/assets/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
