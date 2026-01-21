@@ -251,6 +251,23 @@ function displayFacilities() {
         addFacilityMarker(facility);
     });
 
+    // Auto-zoom to show all filtered facilities
+    if (filteredFacilities.length > 0) {
+        // Get bounds of all filtered facilities
+        const bounds = L.latLngBounds(
+            filteredFacilities.map(f => [f.latitude, f.longitude])
+        );
+
+        // Fit map to bounds with padding
+        map.fitBounds(bounds, {
+            padding: [50, 50],
+            maxZoom: 15
+        });
+    } else {
+        // If no facilities, reset to default view
+        map.setView(KAHRAMANMARAS_CENTER, DEFAULT_ZOOM);
+    }
+
     // Update sidebar details (clear if multiple or none)
     if (filteredFacilities.length === 1) {
         renderFacilityDetails(filteredFacilities[0]);
