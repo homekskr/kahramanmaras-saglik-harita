@@ -243,6 +243,12 @@ body {
     vertical-align: top;
 }
 
+.facilities-table td:nth-child(4) {
+    font-size: 0.75rem;
+    /* Adres kolonu daha küçük */
+    color: var(--text-light);
+}
+
 .action-column {
     text-align: center;
     width: 140px;
