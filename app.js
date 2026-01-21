@@ -31,7 +31,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Setup event listeners
     setupEventListeners();
+
+    // Check for facility parameter in URL (from list page)
+    checkURLParameter();
 });
+
+// Check URL for facility parameter
+function checkURLParameter() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const facilityId = urlParams.get('facility');
+
+    if (facilityId) {
+        // Wait a bit for data to load
+        setTimeout(() => {
+            viewFacility(facilityId);
+        }, 500);
+    }
+}
 
 // =====================================================
 // MAP INITIALIZATION
