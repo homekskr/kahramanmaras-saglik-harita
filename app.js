@@ -531,15 +531,35 @@ function viewFacility(facilityId) {
     const facility = allFacilities.find(f => f.id === parseInt(facilityId));
 
     if (facility) {
-        map.setView([facility.latitude, facility.longitude], 16);
+        // First, zoom to the facility location
+        map.setView([facility.latitude, facility.longitude], 18);
 
-        // Find and open the marker popup
-        markerClusterGroup.eachLayer(layer => {
-            const latLng = layer.getLatLng();
-            if (latLng.lat === facility.latitude && latLng.lng === facility.longitude) {
-                layer.openPopup();
+        // Wait a moment for the map to settle, then find and open the marker
+        setTimeout(() => {
+            let markerFound = false;
+
+            // Get all markers from the cluster group
+            markerClusterGroup.eachLayer(layer => {
+                // Check if this is a marker (not a cluster)
+                if (layer instanceof L.Marker) {
+                    const latLng = layer.getLatLng();
+                    // Use a small tolerance for coordinate comparison
+                    if (Math.abs(latLng.lat - facility.latitude) < 0.0001 &&
+                        Math.abs(latLng.lng - facility.longitude) < 0.0001) {
+
+                        // If marker is in a cluster, zoom to show it
+                        markerClusterGroup.zoomToShowLayer(layer, () => {
+                            layer.openPopup();
+                        });
+                        markerFound = true;
+                    }
+                }
+            });
+
+            if (!markerFound) {
+                console.warn('Marker not found for facility:', facility.name);
             }
-        });
+        }, 300);
 
         // Show details in sidebar
         renderFacilityDetails(facility);
