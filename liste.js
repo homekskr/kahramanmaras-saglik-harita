@@ -110,18 +110,25 @@ function setupEventListeners() {
     const searchInput = document.getElementById('searchInput');
     const districtFilter = document.getElementById('districtFilter');
     const typeFilter = document.getElementById('typeFilter');
+    const facilityFilter = document.getElementById('facilityFilter');
 
     applyBtn.addEventListener('click', applyFilters);
     clearBtn.addEventListener('click', clearFilters);
 
-    // Cascade filtering - update dependent dropdowns
+    // Cascade filtering - update dependent dropdowns and auto-filter
     districtFilter.addEventListener('change', () => {
         updateTypeFilter();
         updateFacilityFilter();
+        applyFilters(); // Otomatik filtrele
     });
 
     typeFilter.addEventListener('change', () => {
         updateFacilityFilter();
+        applyFilters(); // Otomatik filtrele
+    });
+
+    facilityFilter.addEventListener('change', () => {
+        applyFilters(); // Otomatik filtrele
     });
 
     // Akıllı arama - debounced
