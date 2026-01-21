@@ -376,8 +376,14 @@ body {
 
     .facilities-table {
         font-size: 0.75rem;
-        min-width: 600px;
-        /* Prevent table from being too narrow */
+        min-width: 500px;
+        /* Reduced from 600px since no address column */
+    }
+
+    /* Hide address column on mobile */
+    .facilities-table th:nth-child(4),
+    .facilities-table td:nth-child(4) {
+        display: none;
     }
 
     .facilities-table th,
