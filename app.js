@@ -273,6 +273,9 @@ function addFacilityMarker(facility) {
     const marker = L.marker([facility.latitude, facility.longitude], { icon })
         .bindPopup(createPopupContent(facility));
 
+    // Store facility ID in marker for later retrieval
+    marker.facilityId = facility.id;
+
     // Add to cluster group
     markerClusterGroup.addLayer(marker);
 }
@@ -540,19 +543,13 @@ function viewFacility(facilityId) {
 
             // Get all markers from the cluster group
             markerClusterGroup.eachLayer(layer => {
-                // Check if this is a marker (not a cluster)
-                if (layer instanceof L.Marker) {
-                    const latLng = layer.getLatLng();
-                    // Use a small tolerance for coordinate comparison
-                    if (Math.abs(latLng.lat - facility.latitude) < 0.0001 &&
-                        Math.abs(latLng.lng - facility.longitude) < 0.0001) {
-
-                        // If marker is in a cluster, zoom to show it
-                        markerClusterGroup.zoomToShowLayer(layer, () => {
-                            layer.openPopup();
-                        });
-                        markerFound = true;
-                    }
+                // Check if this is a marker (not a cluster) and match by facility ID
+                if (layer instanceof L.Marker && layer.facilityId === facility.id) {
+                    // If marker is in a cluster, zoom to show it
+                    markerClusterGroup.zoomToShowLayer(layer, () => {
+                        layer.openPopup();
+                    });
+                    markerFound = true;
                 }
             });
 
