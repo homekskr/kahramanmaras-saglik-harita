@@ -447,6 +447,11 @@ function applyFilters() {
     displayFacilities();
     updateFacilityCount();
     showStatus(`${filteredFacilities.length} tesis gösteriliyor`, 'info');
+
+    // Eğer belirli bir tesis seçildiyse, popup'ı aç
+    if (facilityId) {
+        viewFacility(facilityId);
+    }
 }
 
 function clearFilters() {

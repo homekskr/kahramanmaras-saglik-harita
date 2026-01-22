@@ -668,6 +668,17 @@ async function handleSaveFacility(e) {
             throw new Error('Koordinatlar eksik');
         }
 
+        // Format social media inputs before saving
+        const facebookInput = document.getElementById('facilityFacebook');
+        const instagramInput = document.getElementById('facilityInstagram');
+        const twitterInput = document.getElementById('facilityTwitter');
+        const nsosyalInput = document.getElementById('facilityNsosyal');
+
+        formatSocialMediaInput(facebookInput, 'https://facebook.com/');
+        formatSocialMediaInput(instagramInput, 'https://instagram.com/');
+        formatSocialMediaInput(twitterInput, 'https://x.com/');
+        formatSocialMediaInput(nsosyalInput, 'https://nsosyal.com/profil/');
+
         const formData = {
             name: document.getElementById('facilityName').value,
             kurum_kodu: document.getElementById('facilityKurumKodu').value || null,
@@ -676,10 +687,10 @@ async function handleSaveFacility(e) {
             phone: document.getElementById('facilityPhone').value,
             website: document.getElementById('facilityWebsite').value,
             email: document.getElementById('facilityEmail').value,
-            facebook: document.getElementById('facilityFacebook').value,
-            instagram: document.getElementById('facilityInstagram').value,
-            twitter: document.getElementById('facilityTwitter').value,
-            nsosyal: document.getElementById('facilityNsosyal').value,
+            facebook: facebookInput.value || null,
+            instagram: instagramInput.value || null,
+            twitter: twitterInput.value || null,
+            nsosyal: nsosyalInput.value || null,
             address: address,
             latitude: lat,
             longitude: lng,
