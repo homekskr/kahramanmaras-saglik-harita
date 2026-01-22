@@ -86,6 +86,9 @@ function setupEventListeners() {
         });
     }
 
+    // Social media URL formatting
+    setupSocialMediaFormatting();
+
     // Geocoding button
     const geocodeBtn = document.getElementById('geocodeAddressBtn');
     if (geocodeBtn) {
@@ -149,6 +152,71 @@ function formatPhoneNumber(e) {
         input.value = formatted;
     }
 }
+
+// =====================================================
+// SOCIAL MEDIA URL FORMATTING
+// =====================================================
+
+// Setup social media input formatting
+function setupSocialMediaFormatting() {
+    const socialMediaInputs = {
+        facilityFacebook: 'https://facebook.com/',
+        facilityInstagram: 'https://instagram.com/',
+        facilityTwitter: 'https://x.com/',
+        facilityNsosyal: 'https://nsosyal.com/profil/'
+    };
+
+    Object.keys(socialMediaInputs).forEach(inputId => {
+        const input = document.getElementById(inputId);
+        if (input) {
+            // Don't format on input, only on blur to avoid interfering with typing
+            input.addEventListener('blur', function () {
+                formatSocialMediaInput(this, socialMediaInputs[inputId]);
+            });
+        }
+    });
+}
+
+// Format social media input to full URL
+function formatSocialMediaInput(input, baseUrl) {
+    let value = input.value.trim();
+
+    if (!value) return; // Don't format empty values
+
+    // If it already looks like a URL, leave it as is
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+        return;
+    }
+
+    // Remove @ symbol if user added it
+    value = value.replace(/^@/, '');
+
+    // Add the base URL
+    input.value = baseUrl + value;
+}
+
+// Extract username from social media URL for display
+function extractSocialMediaUsername(url, baseUrl) {
+    if (!url) return '';
+
+    // If it's already just a username, return it
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        return url;
+    }
+
+    // Extract username from URL
+    try {
+        // Remove trailing slash
+        url = url.replace(/\/$/, '');
+
+        // Get the last part of the URL
+        const parts = url.split('/');
+        return parts[parts.length - 1];
+    } catch (e) {
+        return url;
+    }
+}
+
 
 async function handleLogin(e) {
     e.preventDefault();
@@ -422,10 +490,13 @@ function openFacilityModal(facility = null) {
         document.getElementById('facilityPhone').value = facility.phone || '';
         document.getElementById('facilityWebsite').value = facility.website || '';
         document.getElementById('facilityEmail').value = facility.email || '';
-        document.getElementById('facilityFacebook').value = facility.facebook || '';
-        document.getElementById('facilityInstagram').value = facility.instagram || '';
-        document.getElementById('facilityTwitter').value = facility.twitter || '';
-        document.getElementById('facilityNsosyal').value = facility.nsosyal || '';
+
+        // Extract usernames from social media URLs for display
+        document.getElementById('facilityFacebook').value = extractSocialMediaUsername(facility.facebook, 'https://facebook.com/');
+        document.getElementById('facilityInstagram').value = extractSocialMediaUsername(facility.instagram, 'https://instagram.com/');
+        document.getElementById('facilityTwitter').value = extractSocialMediaUsername(facility.twitter, 'https://x.com/');
+        document.getElementById('facilityNsosyal').value = extractSocialMediaUsername(facility.nsosyal, 'https://nsosyal.com/profil/');
+
         document.getElementById('facilityAddress').value = facility.address || '';
 
         // Trigger phone formatting
