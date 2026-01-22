@@ -353,24 +353,12 @@ function handleNavigation(e) {
     });
     e.currentTarget.classList.add('active');
 
-    // Show/hide sections
+    // Show facilities section (only section now)
     if (section === 'facilities') {
         document.getElementById('facilitiesSection').style.display = 'block';
-        document.getElementById('mapSection').style.display = 'none';
         document.getElementById('pageTitle').textContent = 'Tesis Yönetimi';
         document.getElementById('pageSubtitle').textContent = 'Sağlık tesislerini ekleyin, düzenleyin veya silin';
         document.getElementById('addFacilityBtn').style.display = 'flex';
-    } else if (section === 'map') {
-        document.getElementById('facilitiesSection').style.display = 'none';
-        document.getElementById('mapSection').style.display = 'block';
-        document.getElementById('pageTitle').textContent = 'Harita Görünümü';
-        document.getElementById('pageSubtitle').textContent = 'Tesislerin harita üzerindeki konumları';
-        document.getElementById('addFacilityBtn').style.display = 'none';
-
-        // Initialize admin map if not already done
-        if (!adminMap) {
-            initAdminMap();
-        }
     }
 }
 
