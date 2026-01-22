@@ -548,7 +548,7 @@ body {
 
 @media (max-width: 768px) {
     .mobile-menu-btn {
-        display: flex;
+        display: flex !important;
     }
 
     .sidebar {
@@ -567,16 +567,38 @@ body {
         box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
     }
 
+    .header {
+        padding: 0.5rem 1rem;
+    }
+
+    .header-content {
+        padding: 0;
+        gap: 0.5rem;
+    }
+
     .header-title {
-        font-size: 1rem;
+        font-size: 0.75rem;
+        gap: 0.3rem;
+    }
+
+    .header-logo {
+        height: 1.5rem;
+    }
+
+    .header-count {
+        display: none;
+    }
+
+    .header-actions {
+        gap: 0.5rem;
+    }
+
+    .header-btn {
+        display: none;
     }
 
     .icon {
         font-size: 1.25rem;
-    }
-
-    .header-content {
-        padding: 0.5rem;
     }
 
     .badge {
