@@ -37,12 +37,14 @@ self.addEventListener('fetch', event => {
     event.respondWith(
         fetch(event.request)
             .then(response => {
-                // Network başarılı - cache'i güncelle ve response'u döndür
-                const responseToCache = response.clone();
-                caches.open(CACHE_NAME)
-                    .then(cache => {
-                        cache.put(event.request, responseToCache);
-                    });
+                // Sadece GET isteklerini cache'le (POST, PUT vb. Cache API tarafından desteklenmez)
+                if (event.request.method === 'GET' && response.status === 200) {
+                    const responseToCache = response.clone();
+                    caches.open(CACHE_NAME)
+                        .then(cache => {
+                            cache.put(event.request, responseToCache);
+                        });
+                }
                 return response;
             })
             .catch(() => {
