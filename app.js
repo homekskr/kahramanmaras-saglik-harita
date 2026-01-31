@@ -96,11 +96,10 @@ async function loadProvinceBorder() {
 
         // Add GeoJSON to map with custom styling
         const borderStyle = {
-            color: "#4e73df", // Primary brand color (blue)
-            weight: 3,
-            opacity: 0.6,
-            dashArray: '5, 10', // Dashed line for a professional look
-            fillColor: "#4e73df",
+            color: "#ff0000", // Red color
+            weight: 7,        // Increased thickness (more than 2x the previous 3)
+            opacity: 0.8,     // Higher opacity for visibility
+            fillColor: "#ff0000",
             fillOpacity: 0.05,
             interactive: false // Don't block clicks to markers
         };
