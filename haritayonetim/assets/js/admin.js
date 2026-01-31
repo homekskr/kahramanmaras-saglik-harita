@@ -373,8 +373,8 @@ async function loadFacilities() {
         if (!result.success) throw new Error(result.error);
 
         facilities = result.data || [];
-        filteredFacilities = [...facilities];
-        renderFacilitiesTable();
+        // Apply current filters instead of resetting them
+        applyCurrentFilters();
 
     } catch (error) {
         console.error('Error loading facilities:', error);
@@ -432,33 +432,36 @@ function renderFacilitiesTable() {
     `).join('');
 }
 
-function handleSearch(e) {
-    const query = e.target.value.toLocaleLowerCase('tr-TR');
+function applyCurrentFilters() {
+    const queryInput = document.getElementById('searchInput');
+    const typeFilter = document.getElementById('typeFilter');
+
+    const query = queryInput ? queryInput.value.toLocaleLowerCase('tr-TR') : '';
+    const type = typeFilter ? typeFilter.value.trim().toLocaleUpperCase('tr-TR') : '';
 
     filteredFacilities = facilities.filter(facility => {
+        // 1. Check Search Query
         const name = (facility.name || '').toLocaleLowerCase('tr-TR');
         const district = (facility.district_name || facility.district || '').toLocaleLowerCase('tr-TR');
         const address = (facility.address || '').toLocaleLowerCase('tr-TR');
+        const matchesSearch = query === '' || name.includes(query) || district.includes(query) || address.includes(query);
 
-        return name.includes(query) || district.includes(query) || address.includes(query);
+        // 2. Check Type Filter
+        const facilityType = (facility.facility_type_name || facility.type || '').trim().toLocaleUpperCase('tr-TR');
+        const matchesType = type === '' || facilityType === type;
+
+        return matchesSearch && matchesType;
     });
 
     renderFacilitiesTable();
 }
 
+function handleSearch(e) {
+    applyCurrentFilters();
+}
+
 function handleFilter(e) {
-    const type = e.target.value.trim().toLocaleUpperCase('tr-TR');
-
-    if (type === '') {
-        filteredFacilities = [...facilities];
-    } else {
-        filteredFacilities = facilities.filter(facility => {
-            const facilityType = (facility.facility_type_name || facility.type || '').trim().toLocaleUpperCase('tr-TR');
-            return facilityType === type;
-        });
-    }
-
-    renderFacilitiesTable();
+    applyCurrentFilters();
 }
 
 // =====================================================
