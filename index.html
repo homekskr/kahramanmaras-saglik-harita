@@ -50,9 +50,6 @@
                 <span id="facilityCount" class="header-count">(0 Tesis)</span>
             </h1>
             <div class="header-actions">
-                <a href="/liste.html" class="header-btn">
-                    📋 Tesisler Listesi
-                </a>
                 <button id="mobileMenuBtn" class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Menü">
                     <span></span>
                     <span></span>
@@ -66,6 +63,8 @@
     <div class="main-container">
         <!-- Sidebar -->
         <aside class="sidebar">
+            <!-- Navigation Section -->
+
             <!-- Filters Section -->
             <div class="sidebar-section">
                 <!-- District Filter -->
@@ -113,6 +112,13 @@
                 <button class="btn btn-primary btn-sm" onclick="searchFacility()">
                     Ara
                 </button>
+            </div>
+
+            <!-- Navigation Section -->
+            <div class="sidebar-section" style="border-bottom: none;">
+                <a href="/liste.html" class="btn btn-primary">
+                    📋 Tüm Sağlık Tesisleri
+                </a>
             </div>
 
             <!-- Facility Details View -->
