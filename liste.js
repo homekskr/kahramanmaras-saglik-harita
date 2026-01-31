@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadData() {
     try {
         // Tesisleri yükle
-        const { data: facilities, error: facilitiesError } = await supabase
+        const { data: facilities, error: facilitiesError } = await window.supabase
             .from('facilities')
             .select(`
                 *,

@@ -28,7 +28,7 @@ function getFacilityIcon(facility) {
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Check if user is already logged in
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await window.supabase.auth.getSession();
 
     if (session) {
         currentUser = session.user;
@@ -242,7 +242,7 @@ async function handleLogin(e) {
     errorDiv.style.display = 'none';
 
     try {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await window.supabase.auth.signInWithPassword({
             email,
             password
         });
@@ -266,7 +266,7 @@ async function handleLogin(e) {
 
 async function handleLogout() {
     try {
-        await supabase.auth.signOut();
+        await window.supabase.auth.signOut();
         currentUser = null;
         showLogin();
     } catch (error) {

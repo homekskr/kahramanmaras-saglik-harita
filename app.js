@@ -21,7 +21,7 @@ let facilityTypes = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Check Supabase configuration
-    if (!SUPABASE_CONFIG.url || SUPABASE_CONFIG.url === 'YOUR_SUPABASE_URL_HERE') {
+    if (!window.SUPABASE_CONFIG.url || window.SUPABASE_CONFIG.url === 'YOUR_SUPABASE_URL_HERE') {
         showStatus('⚠️ Supabase yapılandırması gerekli! config.js dosyasını düzenleyin.', 'error', 10000);
         return;
     }
