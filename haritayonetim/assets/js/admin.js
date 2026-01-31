@@ -322,7 +322,8 @@ function populateTypeOptions() {
         facilityTypes.forEach(t => {
             const option = document.createElement('option');
             option.value = t.id;
-            option.textContent = `${t.icon} ${t.name}`;
+            const iconChar = (t.name.toUpperCase() === 'HASTANE' || t.name.toUpperCase() === 'HASTANE EK BİNA') ? 'Ⓗ' : (t.icon || '📍');
+            option.textContent = `${iconChar} ${t.name}`;
             select.appendChild(option);
         });
     }
@@ -332,7 +333,8 @@ function populateTypeOptions() {
         facilityTypes.forEach(t => {
             const option = document.createElement('option');
             option.value = t.name; // Keep name for filtering since we filter the local array
-            option.textContent = `${t.icon} ${t.name}`;
+            const iconChar = (t.name.toUpperCase() === 'HASTANE' || t.name.toUpperCase() === 'HASTANE EK BİNA') ? 'Ⓗ' : (t.icon || '📍');
+            option.textContent = `${iconChar} ${t.name}`;
             filterSelect.appendChild(option);
         });
     }

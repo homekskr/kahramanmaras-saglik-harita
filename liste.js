@@ -6,6 +6,16 @@ let filteredFacilities = [];
 let districts = [];
 let facilityTypes = [];
 
+// Tesis ikonunu getir (Özellikle hastaneler için 'Ⓗ' ikonunu zorunlu yap)
+function getFacilityIcon(facility) {
+    const typeName = (facility.facility_type_name || '').toUpperCase();
+    if (typeName === 'HASTANE' || typeName === 'HASTANE EK BİNA') {
+        return 'Ⓗ';
+    }
+    // facility_type nesnesi içindeki icon'u veya düz icon bilgisini döndür
+    return facility.facility_type_icon || (facility.facility_type?.icon) || '📍';
+}
+
 // Sayfa yüklendiğinde
 document.addEventListener('DOMContentLoaded', async () => {
     await loadData();
@@ -35,6 +45,12 @@ async function loadData() {
             facility_type_name: f.facility_type?.name || 'Bilinmiyor',
             facility_type_id: f.facility_type?.id,
             facility_type_icon: f.facility_type?.icon || 'Ⓗ'
+        }));
+
+        // Hastane ikonlarını zorunlu olarak 'Ⓗ' yap
+        allFacilities = allFacilities.map(f => ({
+            ...f,
+            facility_type_icon: getFacilityIcon(f)
         }));
 
         filteredFacilities = [...allFacilities];
@@ -86,7 +102,9 @@ function populateFilters() {
     facilityTypes.forEach(type => {
         const option = document.createElement('option');
         option.value = type.id;
-        option.textContent = `${type.icon || 'Ⓗ'} ${type.name}`;
+        // Tesis türü listesinde de hastane ikonlarını güncelle
+        const iconChar = (type.name.toUpperCase() === 'HASTANE' || type.name.toUpperCase() === 'HASTANE EK BİNA') ? 'Ⓗ' : (type.icon || '📍');
+        option.textContent = `${iconChar} ${type.name}`;
         typeFilter.appendChild(option);
     });
 
@@ -161,7 +179,8 @@ function updateTypeFilter() {
     availableTypes.forEach(type => {
         const option = document.createElement('option');
         option.value = type.id;
-        option.textContent = `${type.icon || 'Ⓗ'} ${type.name}`;
+        const iconChar = (type.name.toUpperCase() === 'HASTANE' || type.name.toUpperCase() === 'HASTANE EK BİNA') ? 'Ⓗ' : (type.icon || '📍');
+        option.textContent = `${iconChar} ${type.name}`;
         if (type.id == currentTypeId) option.selected = true;
         typeFilter.appendChild(option);
     });
