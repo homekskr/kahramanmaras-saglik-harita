@@ -10,7 +10,7 @@ let facilityTypes = [];
 function getFacilityIcon(facility) {
     const typeName = (facility.facility_type_name || '').toUpperCase();
     if (typeName === 'HASTANE' || typeName === 'HASTANE EK BİNA') {
-        return 'Ⓗ';
+        return '<div class="hospital-sign">H</div>';
     }
     // facility_type nesnesi içindeki icon'u veya düz icon bilgisini döndür
     return facility.facility_type_icon || (facility.facility_type?.icon) || '📍';
@@ -102,9 +102,9 @@ function populateFilters() {
     facilityTypes.forEach(type => {
         const option = document.createElement('option');
         option.value = type.id;
-        // Tesis türü listesinde de hastane ikonlarını güncelle
-        const iconChar = (type.name.toUpperCase() === 'HASTANE' || type.name.toUpperCase() === 'HASTANE EK BİNA') ? 'Ⓗ' : (type.icon || '📍');
-        option.textContent = `${iconChar} ${type.name}`;
+        // Dropdown'larda HTML desteklenmediği için [H] şeklinde gösterelim
+        const iconLabel = (type.name.toUpperCase() === 'HASTANE' || type.name.toUpperCase() === 'HASTANE EK BİNA') ? '[H]' : (type.icon || '📍');
+        option.textContent = `${iconLabel} ${type.name}`;
         typeFilter.appendChild(option);
     });
 
@@ -179,8 +179,8 @@ function updateTypeFilter() {
     availableTypes.forEach(type => {
         const option = document.createElement('option');
         option.value = type.id;
-        const iconChar = (type.name.toUpperCase() === 'HASTANE' || type.name.toUpperCase() === 'HASTANE EK BİNA') ? 'Ⓗ' : (type.icon || '📍');
-        option.textContent = `${iconChar} ${type.name}`;
+        const iconLabel = (type.name.toUpperCase() === 'HASTANE' || type.name.toUpperCase() === 'HASTANE EK BİNA') ? '[H]' : (type.icon || '📍');
+        option.textContent = `${iconLabel} ${type.name}`;
         if (type.id == currentTypeId) option.selected = true;
         typeFilter.appendChild(option);
     });

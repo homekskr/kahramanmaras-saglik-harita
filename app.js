@@ -295,7 +295,7 @@ function displayFacilities() {
 function getFacilityIcon(facility) {
     const typeName = (facility.facility_type_name || '').toUpperCase();
     if (typeName === 'HASTANE' || typeName === 'HASTANE EK BİNA') {
-        return 'Ⓗ';
+        return '<div class="hospital-sign">H</div>';
     }
     return facility.facility_type_icon || '📍';
 }
