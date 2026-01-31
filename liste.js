@@ -34,7 +34,7 @@ async function loadData() {
             district_id: f.district?.id,
             facility_type_name: f.facility_type?.name || 'Bilinmiyor',
             facility_type_id: f.facility_type?.id,
-            facility_type_icon: f.facility_type?.icon || '🏥'
+            facility_type_icon: f.facility_type?.icon || 'Ⓗ'
         }));
 
         filteredFacilities = [...allFacilities];
@@ -86,7 +86,7 @@ function populateFilters() {
     facilityTypes.forEach(type => {
         const option = document.createElement('option');
         option.value = type.id;
-        option.textContent = `${type.icon || '🏥'} ${type.name}`;
+        option.textContent = `${type.icon || 'Ⓗ'} ${type.name}`;
         typeFilter.appendChild(option);
     });
 
@@ -161,7 +161,7 @@ function updateTypeFilter() {
     availableTypes.forEach(type => {
         const option = document.createElement('option');
         option.value = type.id;
-        option.textContent = `${type.icon || '🏥'} ${type.name}`;
+        option.textContent = `${type.icon || 'Ⓗ'} ${type.name}`;
         if (type.id == currentTypeId) option.selected = true;
         typeFilter.appendChild(option);
     });

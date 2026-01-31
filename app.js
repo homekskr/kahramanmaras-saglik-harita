@@ -294,7 +294,7 @@ function displayFacilities() {
 function addFacilityMarker(facility) {
     // Create custom icon
     const icon = L.divIcon({
-        html: `<div class="custom-marker" style="font-size: 2rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">${facility.facility_type_icon || '🏥'}</div>`,
+        html: `<div class="custom-marker" style="font-size: 2rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">${facility.facility_type_icon || 'Ⓗ'}</div>`,
         className: '',
         iconSize: [40, 40],
         iconAnchor: [20, 40],
@@ -319,7 +319,7 @@ function createPopupContent(facility) {
     return `
         <div class="facility-popup">
             <div class="popup-header">
-                <span class="popup-icon">${facility.facility_type_icon || '🏥'}</span>
+                <span class="popup-icon">${facility.facility_type_icon || 'Ⓗ'}</span>
                 <h3 class="popup-title">${facility.name}</h3>
             </div>
             <div class="popup-body">
@@ -364,7 +364,7 @@ function renderFacilityDetails(facility) {
         <div class="details-card">
             <div class="details-header">
                 <h3 class="details-title">${facility.name}</h3>
-                <span class="details-type-icon">${facility.facility_type_icon || '🏥'}</span>
+                <span class="details-type-icon">${facility.facility_type_icon || 'Ⓗ'}</span>
             </div>
             <div class="details-body">
                 <div class="details-info">
@@ -542,7 +542,7 @@ function renderSuggestions(matches) {
     } else {
         container.innerHTML = matches.map(f => `
             <div class="suggestion-item" onclick="selectSuggestion(${f.id})">
-                <span class="suggestion-icon">${f.facility_type_icon || '🏥'}</span>
+                <span class="suggestion-icon">${f.facility_type_icon || 'Ⓗ'}</span>
                 <div class="suggestion-content">
                     <div class="suggestion-name">${f.name}</div>
                 </div>
