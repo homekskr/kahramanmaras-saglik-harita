@@ -433,24 +433,29 @@ function renderFacilitiesTable() {
 }
 
 function handleSearch(e) {
-    const query = e.target.value.toLowerCase();
+    const query = e.target.value.toLocaleLowerCase('tr-TR');
 
     filteredFacilities = facilities.filter(facility => {
-        return facility.name.toLowerCase().includes(query) ||
-            (facility.district && facility.district.toLowerCase().includes(query)) ||
-            (facility.address && facility.address.toLowerCase().includes(query));
+        const name = (facility.name || '').toLocaleLowerCase('tr-TR');
+        const district = (facility.district_name || facility.district || '').toLocaleLowerCase('tr-TR');
+        const address = (facility.address || '').toLocaleLowerCase('tr-TR');
+
+        return name.includes(query) || district.includes(query) || address.includes(query);
     });
 
     renderFacilitiesTable();
 }
 
 function handleFilter(e) {
-    const type = e.target.value;
+    const type = e.target.value.trim().toLocaleUpperCase('tr-TR');
 
     if (type === '') {
         filteredFacilities = [...facilities];
     } else {
-        filteredFacilities = facilities.filter(facility => (facility.facility_type_name || facility.type) === type);
+        filteredFacilities = facilities.filter(facility => {
+            const facilityType = (facility.facility_type_name || facility.type || '').trim().toLocaleUpperCase('tr-TR');
+            return facilityType === type;
+        });
     }
 
     renderFacilitiesTable();
@@ -1109,41 +1114,54 @@ function parseExcelData(data) {
     return facilities;
 }
 
-async function importFacilities(facilities) {
+async function importFacilities(facilitiesToImport) {
     const results = {
         success: [],
         errors: []
     };
 
-    const total = facilities.length;
+    const total = facilitiesToImport.length;
     let processed = 0;
 
-    for (const facility of facilities) {
+    // Get all districts and types once before the loop for performance
+    const districtsResult = await window.db.getDistricts();
+    const typesResult = await window.db.getFacilityTypes();
+
+    if (!districtsResult.success || !typesResult.success) {
+        showToast('İlçe veya tesis türleri yüklenemedi. İçe aktarma iptal edildi.', 'error');
+        return;
+    }
+
+    const allDistricts = districtsResult.data;
+    const allTypes = typesResult.data;
+
+    for (const facility of facilitiesToImport) {
         try {
             // Validate required fields
             if (!facility.name || !facility.type || !facility.district || !facility.address) {
-                throw new Error('Zorunlu alanlar eksik');
+                throw new Error('Zorunlu alanlar (Tesis Adı, Tür, İlçe, Adres) eksik');
             }
 
-            // Get all districts and types to match names to IDs
-            const districtsResult = await window.db.getDistricts();
-            const typesResult = await window.db.getFacilityTypes();
+            // Find matching district ID (CASE-INSENSITIVE and TRIMMED)
+            const matchedDistrict = allDistricts.find(d =>
+                d.name.trim().toLocaleUpperCase('tr-TR') === facility.district.trim().toLocaleUpperCase('tr-TR')
+            );
 
-            if (districtsResult.success && typesResult.success) {
-                const districts = districtsResult.data;
-                const types = typesResult.data;
+            if (matchedDistrict) {
+                facility.district_id = matchedDistrict.id;
+            } else {
+                throw new Error(`'${facility.district}' isimli ilçe sistemde bulunamadı. Lütfen yazımı kontrol edin.`);
+            }
 
-                // Find matching district ID (case insensitive match since they are both uppercase)
-                const matchedDistrict = districts.find(d => d.name === facility.district);
-                if (matchedDistrict) {
-                    facility.district_id = matchedDistrict.id;
-                }
+            // Find matching type ID (CASE-INSENSITIVE and TRIMMED)
+            const matchedType = allTypes.find(t =>
+                t.name.trim().toLocaleUpperCase('tr-TR') === facility.type.trim().toLocaleUpperCase('tr-TR')
+            );
 
-                // Find matching type ID
-                const matchedType = types.find(t => t.name === facility.type);
-                if (matchedType) {
-                    facility.facility_type_id = matchedType.id;
-                }
+            if (matchedType) {
+                facility.facility_type_id = matchedType.id;
+            } else {
+                throw new Error(`'${facility.type}' isimli tesis türü sistemde bulunamadı. Lütfen yazımı kontrol edin.`);
             }
 
             // If coordinates are missing, try geocoding
