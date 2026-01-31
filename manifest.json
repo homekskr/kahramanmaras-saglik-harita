@@ -1,6 +1,6 @@
 {
   "name": "Kahramanmaraş Sağlık Tesisleri Haritası",
-  "short_name": "Sağlık Harita",
+  "short_name": "Sağlık Haritası",
   "description": "Kahramanmaraş İl Sağlık Müdürlüğü - Sağlık Tesisleri Harita Uygulaması",
   "start_url": "/",
   "scope": "/",
