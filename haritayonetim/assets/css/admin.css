@@ -192,10 +192,9 @@ body {
     color: var(--text-secondary);
     text-decoration: none;
     border-radius: 8px;
-    margin-bottom: 4px;
     transition: all 0.2s;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .nav-item svg {
@@ -884,8 +883,27 @@ body {
 
 @media (max-width: 768px) {
     .sidebar {
-        transform: translateX(-100%);
-        transition: transform 0.3s;
+        padding: 0 16px;
+        height: auto;
+        min-height: 64px;
+        flex-wrap: wrap;
+        position: relative;
+    }
+
+    .sidebar-header {
+        margin: 12px 0;
+    }
+
+    .sidebar-nav {
+        padding: 0;
+        width: 100%;
+        order: 3;
+        margin-bottom: 12px;
+        justify-content: center;
+    }
+
+    .sidebar-footer {
+        margin: 12px 0;
     }
 
     .main-content {

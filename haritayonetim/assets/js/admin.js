@@ -369,14 +369,19 @@ function handleNavigation(e) {
     });
     e.currentTarget.classList.add('active');
 
-    // Show facilities section (only section now)
+    // Hide all sections first
+    document.querySelectorAll('.content-section').forEach(sec => {
+        sec.style.display = 'none';
+    });
+
+    // Show appropriate section
     if (section === 'facilities') {
+        document.getElementById('facilitiesSection').style.display = 'block';
         document.getElementById('pageTitle').textContent = 'Tesis Yönetimi';
         document.getElementById('pageSubtitle').textContent = 'Sağlık tesislerini ekleyin, düzenleyin veya silin';
         document.getElementById('addFacilityBtn').style.display = 'flex';
         document.getElementById('importExcelBtn').style.display = 'flex';
     } else if (section === 'reports') {
-        document.getElementById('facilitiesSection').style.display = 'none';
         document.getElementById('reportsSection').style.display = 'block';
         document.getElementById('pageTitle').textContent = 'Hata Bildirimleri';
         document.getElementById('pageSubtitle').textContent = 'Ziyaretçilerden gelen hata bildirimlerini yönetin';
