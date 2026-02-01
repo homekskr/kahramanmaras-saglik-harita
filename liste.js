@@ -179,7 +179,7 @@ function updateTypeFilter() {
     availableTypes.forEach(type => {
         const option = document.createElement('option');
         option.value = type.id;
-        const iconLabel = (type.name.toUpperCase() === 'HASTANE' || type.name.toUpperCase() === 'HASTANE EK BİNA') ? '[H]' : (type.icon || '📍');
+        const iconLabel = (type.name.toUpperCase() === 'HASTANE' || type.name.toUpperCase() === 'HASTANE EK BİNA') ? 'Ⓗ' : (type.icon || '📍');
         option.textContent = `${iconLabel} ${type.name}`;
         if (type.id == currentTypeId) option.selected = true;
         typeFilter.appendChild(option);

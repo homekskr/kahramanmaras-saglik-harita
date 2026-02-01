@@ -336,7 +336,7 @@ function populateTypeOptions() {
         facilityTypes.forEach(t => {
             const option = document.createElement('option');
             option.value = t.id;
-            const iconLabel = (t.name.toUpperCase() === 'HASTANE' || t.name.toUpperCase() === 'HASTANE EK BİNA') ? '[H]' : (t.icon || '📍');
+            const iconLabel = (t.name.toUpperCase() === 'HASTANE' || t.name.toUpperCase() === 'HASTANE EK BİNA') ? 'Ⓗ' : (t.icon || '📍');
             option.textContent = `${iconLabel} ${t.name}`;
             select.appendChild(option);
         });
@@ -347,7 +347,7 @@ function populateTypeOptions() {
         facilityTypes.forEach(t => {
             const option = document.createElement('option');
             option.value = t.name; // Keep name for filtering since we filter the local array
-            const iconLabel = (t.name.toUpperCase() === 'HASTANE' || t.name.toUpperCase() === 'HASTANE EK BİNA') ? '[H]' : (t.icon || '📍');
+            const iconLabel = (t.name.toUpperCase() === 'HASTANE' || t.name.toUpperCase() === 'HASTANE EK BİNA') ? 'Ⓗ' : (t.icon || '📍');
             option.textContent = `${iconLabel} ${t.name}`;
             filterSelect.appendChild(option);
         });
