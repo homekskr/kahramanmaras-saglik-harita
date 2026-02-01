@@ -297,6 +297,67 @@ async function reverseGeocode(lat, lng) {
 }
 
 // =====================================================
+/**
+ * Hata bildirimi gönder
+ */
+async function submitReport(reportData) {
+    try {
+        const { data, error } = await window.supabase
+            .from('facility_reports')
+            .insert([reportData])
+            .select();
+
+        if (error) throw error;
+        return { success: true, data: data[0] };
+    } catch (error) {
+        console.error('Bildirim gönderilirken hata:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Tüm bildirimleri getir (admin paneli için)
+ */
+async function getReports() {
+    try {
+        const { data, error } = await window.supabase
+            .from('facility_reports')
+            .select(`
+                *,
+                facility:facilities(name)
+            `)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return { success: true, data };
+    } catch (error) {
+        console.error('Bildirimler yüklenirken hata:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Bildirimi işle (Onayla/Reddet)
+ */
+async function updateReportStatus(reportId, status) {
+    try {
+        const { data, error } = await window.supabase
+            .from('facility_reports')
+            .update({
+                status: status,
+                processed_at: new Date().toISOString()
+            })
+            .eq('id', reportId)
+            .select();
+
+        if (error) throw error;
+        return { success: true, data: data[0] };
+    } catch (error) {
+        console.error('Bildirim güncellenirken hata:', error);
+        return { success: false, error: error.message };
+    }
+}
+
 // EXPORT
 // =====================================================
 
@@ -314,5 +375,8 @@ window.db = {
     updateFacility,
     deleteFacility,
     geocodeAddress,
-    reverseGeocode
+    reverseGeocode,
+    submitReport,
+    getReports,
+    updateReportStatus
 };

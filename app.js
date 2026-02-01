@@ -407,6 +407,9 @@ function renderFacilityDetails(facility) {
                         ${facility.nsosyal ? `<a href="${facility.nsosyal}" target="_blank" class="social-link" title="NSosyal"><svg viewBox="0 0 24 24" width="24" height="24"><circle cx="12" cy="12" r="11" fill="#00A8E8"/><text x="12" y="16" text-anchor="middle" fill="white" font-size="12" font-weight="bold" font-family="Arial">N</text></svg></a>` : ''}
                     </div>
                 </div>` : ''}
+                <button class="report-error-btn" onclick="openReportModal(${facility.id}, '${facility.name.replace(/'/g, "\\'")}')">
+                    ⚠️ Bilgilerde Hata Bildir
+                </button>
             </div>
             <div class="details-actions">
                 <a href="https://www.google.com/maps/dir/?api=1&destination=${facility.latitude},${facility.longitude}" 
@@ -716,6 +719,12 @@ function setupEventListeners() {
             viewFacility(facilityId);
         }
     });
+
+    // Report form submission
+    const reportForm = document.getElementById('reportForm');
+    if (reportForm) {
+        reportForm.addEventListener('submit', handleReportSubmit);
+    }
 }
 
 // =====================================================
@@ -742,4 +751,50 @@ function closeMobileSidebar() {
         overlay.classList.remove('active');
         menuBtn.classList.remove('active');
     }
+}
+
+// =====================================================
+// ERROR REPORTING FUNCTIONS
+// =====================================================
+
+function openReportModal(facilityId, facilityName) {
+    document.getElementById('reportFacilityId').value = facilityId;
+    document.getElementById('reportFacilityName').textContent = facilityName;
+    document.getElementById('reportModal').classList.add('active');
+}
+
+function closeReportModal() {
+    document.getElementById('reportModal').classList.remove('active');
+    document.getElementById('reportForm').reset();
+}
+
+async function handleReportSubmit(e) {
+    e.preventDefault();
+
+    const facilityId = document.getElementById('reportFacilityId').value;
+    const reportType = document.getElementById('reportType').value;
+    const reportNote = document.getElementById('reportNote').value;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Gönderiliyor...';
+
+    const reportData = {
+        facility_id: facilityId,
+        report_type: reportType,
+        reporter_note: reportNote,
+        status: 'pending'
+    };
+
+    const result = await window.db.submitReport(reportData);
+
+    if (result.success) {
+        showStatus('Bildiriminiz başarıyla iletildi. Teşekkür ederiz!', 'success');
+        closeReportModal();
+    } else {
+        showStatus('Bildirim gönderilirken bir hata oluştu: ' + result.error, 'error');
+    }
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Bildirimi Gönder';
 }

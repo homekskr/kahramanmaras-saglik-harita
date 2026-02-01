@@ -12,6 +12,8 @@ let locationMarker = null;
 let adminMap = null;
 let districts = [];
 let facilityTypes = [];
+let reports = [];
+let filteredReports = [];
 
 // Tesis ikonunu getir (Özellikle hastaneler için 'Ⓗ' ikonunu zorunlu yap)
 function getFacilityIcon(facility) {
@@ -125,6 +127,9 @@ function setupEventListeners() {
             document.getElementById('excelFileInput').click();
         });
     }
+
+    // Report search
+    document.getElementById('reportSearchInput')?.addEventListener('input', handleReportSearch);
 }
 
 // Phone number formatter
@@ -366,10 +371,18 @@ function handleNavigation(e) {
 
     // Show facilities section (only section now)
     if (section === 'facilities') {
-        document.getElementById('facilitiesSection').style.display = 'block';
         document.getElementById('pageTitle').textContent = 'Tesis Yönetimi';
         document.getElementById('pageSubtitle').textContent = 'Sağlık tesislerini ekleyin, düzenleyin veya silin';
         document.getElementById('addFacilityBtn').style.display = 'flex';
+        document.getElementById('importExcelBtn').style.display = 'flex';
+    } else if (section === 'reports') {
+        document.getElementById('facilitiesSection').style.display = 'none';
+        document.getElementById('reportsSection').style.display = 'block';
+        document.getElementById('pageTitle').textContent = 'Hata Bildirimleri';
+        document.getElementById('pageSubtitle').textContent = 'Ziyaretçilerden gelen hata bildirimlerini yönetin';
+        document.getElementById('addFacilityBtn').style.display = 'none';
+        document.getElementById('importExcelBtn').style.display = 'none';
+        loadReports();
     }
 }
 
@@ -1276,3 +1289,139 @@ function displayImportResults(results) {
 // Make functions globally accessible
 window.editFacility = editFacility;
 window.confirmDeleteFacility = confirmDeleteFacility;
+window.handleProcessReport = handleProcessReport;
+window.confirmDeleteReport = confirmDeleteReport;
+
+// =====================================================
+// REPORT MANAGEMENT
+// =====================================================
+
+async function loadReports() {
+    try {
+        const result = await window.db.getReports();
+
+        if (!result.success) throw new Error(result.error);
+
+        reports = result.data || [];
+        filteredReports = [...reports];
+        renderReportsTable();
+
+    } catch (error) {
+        console.error('Error loading reports:', error);
+        showToast('Bildirimler yüklenirken bir hata oluştu', 'error');
+    }
+}
+
+function renderReportsTable() {
+    const tbody = document.getElementById('reportsTableBody');
+    if (!tbody) return;
+
+    if (filteredReports.length === 0) {
+        tbody.innerHTML = `
+            <tr class="empty-state">
+                <td colspan="6">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    </svg>
+                    <p>Henüz bildirim bulunmuyor</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    const typeLabels = {
+        'location': '📍 Lokasyon',
+        'contact': '📞 İletişim',
+        'address': '📮 Adres',
+        'name': '🏷️ İsim',
+        'closed': '🚫 Kapalı',
+        'other': '❓ Diğer'
+    };
+
+    const statusLabels = {
+        'pending': '<span class="status-badge pending">Beklemede</span>',
+        'approved': '<span class="status-badge approved">Onaylandı</span>',
+        'rejected': '<span class="status-badge rejected">Reddedildi</span>'
+    };
+
+    tbody.innerHTML = filteredReports.map(report => `
+        <tr class="${report.status}">
+            <td><strong>${report.facility?.name || 'Bilinmiyor'}</strong></td>
+            <td>${typeLabels[report.report_type] || report.report_type}</td>
+            <td>
+                <div class="report-note-cell" title="${report.reporter_note}">
+                    ${report.reporter_note}
+                </div>
+            </td>
+            <td>${statusLabels[report.status] || report.status}</td>
+            <td>${new Date(report.created_at).toLocaleDateString('tr-TR')}</td>
+            <td>
+                <div class="table-actions">
+                    ${report.status === 'pending' ? `
+                        <button class="btn btn-ghost btn-icon text-success" onclick="handleProcessReport('${report.id}', 'approved')" title="Onayla">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </button>
+                        <button class="btn btn-ghost btn-icon text-danger" onclick="handleProcessReport('${report.id}', 'rejected')" title="Reddet">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    ` : `
+                        <button class="btn btn-ghost btn-icon" onclick="confirmDeleteReport('${report.id}')" title="Sil">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                        </button>
+                    `}
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function handleReportSearch(e) {
+    const query = e.target.value.toLowerCase().trim();
+
+    filteredReports = reports.filter(r =>
+        (r.facility?.name || '').toLowerCase().includes(query) ||
+        (r.reporter_note || '').toLowerCase().includes(query) ||
+        (r.report_type || '').toLowerCase().includes(query)
+    );
+
+    renderReportsTable();
+}
+
+async function handleProcessReport(reportId, status) {
+    const message = status === 'approved' ? 'Bu bildirimi onaylamak istediğinize emin misiniz?' : 'Bu bildirimi reddetmek istediğinize emin misiniz?';
+
+    if (!confirm(message)) return;
+
+    try {
+        const result = await window.db.updateReportStatus(reportId, status);
+        if (result.success) {
+            showToast(status === 'approved' ? 'Bildirim onaylandı' : 'Bildirim reddedildi');
+            loadReports();
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error('Error processing report:', error);
+        showToast('Bildirim işlenirken hata oluştu', 'error');
+    }
+}
+
+async function confirmDeleteReport(reportId) {
+    if (!confirm('Bu bildirimi silmek istediğinize emin misiniz?')) return;
+
+    try {
+        const { error } = await window.supabase
+            .from('facility_reports')
+            .delete()
+            .eq('id', reportId);
+
+        if (error) throw error;
+
+        showToast('Bildirim silindi');
+        loadReports();
+    } catch (error) {
+        console.error('Error deleting report:', error);
+        showToast('Bildirim silinirken hata oluştu', 'error');
+    }
+}

@@ -248,6 +248,47 @@
             }, 10000);
         });
     </script>
+    <!-- Hata Bildir Modal -->
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚠️ Bilgi Hata Bildirimi</h2>
+                <button type="button" class="close-btn" onclick="closeReportModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="reportForm">
+                    <input type="hidden" id="reportFacilityId">
+                    <p id="reportFacilityName" style="font-weight: 600; color: var(--primary); margin-bottom: 1rem;">
+                    </p>
+
+                    <div class="form-group">
+                        <label>Hata Türü</label>
+                        <select id="reportType" required>
+                            <option value="">Lütfen seçiniz</option>
+                            <option value="location">Hatalı Konum / Harita Yeri</option>
+                            <option value="contact">Hatalı İletişim Bilgisi (Tel/E-posta)</option>
+                            <option value="address">Hatalı Adres Bilgisi</option>
+                            <option value="name">Hatalı Tesis Adı</option>
+                            <option value="closed">Tesis Kalıcı Olarak Kapalı</option>
+                            <option value="other">Diğer</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Doğru Bilgiler / Notunuz</label>
+                        <textarea id="reportNote" rows="4"
+                            placeholder="Lütfen düzeltilmesi gereken bilgileri detaylıca yazınız..."
+                            required></textarea>
+                    </div>
+
+                    <div class="modal-buttons">
+                        <button type="button" class="btn btn-secondary" onclick="closeReportModal()">İptal</button>
+                        <button type="submit" class="btn btn-primary">Bildirimi Gönder</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
