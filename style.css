@@ -1192,3 +1192,16 @@ body {
 .report-error-btn:hover {
     background: #fee2e2 !important;
 }
+
+.popup-btn-report {
+    background: #fff5f5 !important;
+    color: #c53030 !important;
+    border: 1px dashed #feb2b2 !important;
+    flex: 1 1 100% !important;
+    /* Force to its own line or take full width if needed */
+    margin-top: 0.25rem;
+}
+
+.popup-btn-report:hover {
+    background: #fee2e2 !important;
+}

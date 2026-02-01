@@ -359,6 +359,9 @@ function createPopupContent(facility) {
                 <button class="popup-btn" onclick="window.open('https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${facility.latitude},${facility.longitude}&heading=0&pitch=0&fov=80', '_blank')" style="background: linear-gradient(135deg, #34a853 0%, #0f9d58 100%);">
                     🏙️ Sokak Görünümü
                 </button>
+                <button class="popup-btn popup-btn-report" onclick="openReportModal(${facility.id}, '${facility.name.replace(/'/g, "\\'")}')">
+                    ⚠️ Hata Bildir
+                </button>
             </div>
         </div>
     `;
