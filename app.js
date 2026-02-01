@@ -293,7 +293,7 @@ function displayFacilities() {
 
 // Tesis ikonunu getir (Özellikle hastaneler için 'Ⓗ' ikonunu zorunlu yap)
 function getFacilityIcon(facility) {
-    const typeName = (facility.facility_type_name || '').toUpperCase();
+    const typeName = (facility.facility_type_name || '').trim().toUpperCase();
     if (typeName === 'HASTANE' || typeName === 'HASTANE EK BİNA') {
         return '<div class="hospital-sign">H</div>';
     }

@@ -15,7 +15,7 @@ let facilityTypes = [];
 
 // Tesis ikonunu getir (Özellikle hastaneler için 'Ⓗ' ikonunu zorunlu yap)
 function getFacilityIcon(facility) {
-    const typeName = (facility.facility_type_name || facility.type || '').toUpperCase();
+    const typeName = (facility.facility_type_name || facility.type || '').trim().toUpperCase();
     if (typeName === 'HASTANE' || typeName === 'HASTANE EK BİNA') {
         return '<div class="hospital-sign">H</div>';
     }
@@ -872,14 +872,27 @@ function initAdminMap() {
 
     // Add markers for all facilities
     facilities.forEach(facility => {
-        const marker = L.marker([facility.latitude, facility.longitude])
+        const iconChar = getFacilityIcon(facility);
+        const icon = L.divIcon({
+            html: `<div class="custom-marker" style="font-size: 1.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">${iconChar}</div>`,
+            className: '',
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        const marker = L.marker([facility.latitude, facility.longitude], { icon })
             .addTo(adminMap);
 
         marker.bindPopup(`
-        < strong > ${facility.name}</strong > <br>
-            ${facility.type || ''}<br>
-                ${facility.address || ''}
-                `);
+            <div style="padding: 5px;">
+                <strong style="font-size: 1.1rem; color: var(--primary);">${facility.name}</strong><br>
+                <span style="display: flex; align-items: center; gap: 5px; margin: 5px 0;">
+                    ${iconChar} ${facility.facility_type_name || facility.type || '-'}
+                </span>
+                <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary);">${facility.address || '-'}</p>
+            </div>
+        `);
     });
 }
 
