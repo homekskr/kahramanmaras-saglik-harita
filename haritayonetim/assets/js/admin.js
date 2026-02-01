@@ -430,10 +430,10 @@ function renderFacilitiesTable() {
 
     tbody.innerHTML = filteredFacilities.map(facility => `
         <tr>
-            <td><strong>${facility.name}</strong></td>
-            <td>${facility.kurum_kodu || '-'}</td>
-            <td><span style="display:flex; align-items:center; gap:8px;">${getFacilityIcon(facility)} ${facility.facility_type_name || facility.type || '-'}</span></td>
-            <td>${facility.district_name || facility.district || '-'}</td>
+            <td><strong>${window.utils.escapeHTML(facility.name)}</strong></td>
+            <td>${window.utils.escapeHTML(facility.kurum_kodu) || '-'}</td>
+            <td><span style="display:flex; align-items:center; gap:8px;">${getFacilityIcon(facility)} ${window.utils.escapeHTML(facility.facility_type_name || facility.type) || '-'}</span></td>
+            <td>${window.utils.escapeHTML(facility.district_name || facility.district) || '-'}</td>
             <td>
                 ${facility.website ? `<a href="${facility.website}" target="_blank" class="btn btn-ghost btn-icon btn-sm" title="Web Sitesi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></a>` : '-'}
             </td>
@@ -760,7 +760,7 @@ async function handleSaveFacility(e) {
 
 function confirmDeleteFacility(id, name) {
     const modal = document.getElementById('deleteModal');
-    document.getElementById('deleteFacilityName').textContent = name;
+    document.getElementById('deleteFacilityName').textContent = window.utils.escapeHTML(name);
     modal.classList.add('active');
 
     // Store facility ID for deletion

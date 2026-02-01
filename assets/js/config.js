@@ -361,6 +361,23 @@ async function updateReportStatus(reportId, status) {
 // EXPORT
 // =====================================================
 
+// =====================================================
+// UTILITIES
+// =====================================================
+
+/**
+ * HTML karakterlerini escape eder (XSS koruması)
+ */
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 // Global scope'a ekle
 window.db = {
     getDistricts,
@@ -379,4 +396,8 @@ window.db = {
     submitReport,
     getReports,
     updateReportStatus
+};
+
+window.utils = {
+    escapeHTML
 };
