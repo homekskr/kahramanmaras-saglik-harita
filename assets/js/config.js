@@ -81,7 +81,8 @@ async function getAllFacilities() {
     try {
         const { data, error } = await window.supabase
             .from('facilities_full')
-            .select('*');
+            .select('*')
+            .eq('is_active', true);
 
         if (error) throw error;
         return { success: true, data };
@@ -99,7 +100,8 @@ async function getFacilitiesByDistrict(districtId) {
         const { data, error } = await window.supabase
             .from('facilities_full')
             .select('*')
-            .eq('district_id', districtId);
+            .eq('district_id', districtId)
+            .eq('is_active', true);
 
         if (error) throw error;
         return { success: true, data };
@@ -117,7 +119,8 @@ async function getFacilitiesByType(typeId) {
         const { data, error } = await window.supabase
             .from('facilities_full')
             .select('*')
-            .eq('facility_type_id', typeId);
+            .eq('facility_type_id', typeId)
+            .eq('is_active', true);
 
         if (error) throw error;
         return { success: true, data };
@@ -302,13 +305,12 @@ async function reverseGeocode(lat, lng) {
  */
 async function submitReport(reportData) {
     try {
-        const { data, error } = await window.supabase
+        const { error } = await window.supabase
             .from('facility_reports')
-            .insert([reportData])
-            .select();
+            .insert([reportData]);
 
         if (error) throw error;
-        return { success: true, data: data[0] };
+        return { success: true };
     } catch (error) {
         console.error('Bildirim gönderilirken hata:', error);
         return { success: false, error: error.message };
