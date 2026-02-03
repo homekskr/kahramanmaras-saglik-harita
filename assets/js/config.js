@@ -360,6 +360,67 @@ async function updateReportStatus(reportId, status) {
     }
 }
 
+// =====================================================
+// RBAC (Role-Based Access Control)
+// =====================================================
+
+/**
+ * Get current user's role and permissions
+ */
+async function getUserRole() {
+    try {
+        const { data, error } = await window.supabase.rpc('get_user_role');
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            // No role found, might be a new user or not assigned
+            return {
+                success: true,
+                role: null,
+                allowedFacilityTypes: []
+            };
+        }
+
+        return {
+            success: true,
+            role: data[0].role,
+            allowedFacilityTypes: data[0].allowed_facility_types || []
+        };
+    } catch (error) {
+        console.error('Error fetching user role:', error);
+        return {
+            success: false,
+            error: error.message,
+            role: null,
+            allowedFacilityTypes: []
+        };
+    }
+}
+
+/**
+ * Check if user has permission for a facility type
+ */
+async function checkPermission(facilityTypeId) {
+    const roleData = await getUserRole();
+
+    if (!roleData.success || !roleData.role) {
+        return false; // No role = no permission
+    }
+
+    // Admins have full access
+    if (roleData.role === 'admin') {
+        return true;
+    }
+
+    // Facility managers: check if type is in allowed list
+    if (roleData.role === 'facility_manager') {
+        return roleData.allowedFacilityTypes.includes(facilityTypeId);
+    }
+
+    return false;
+}
+
 // EXPORT
 // =====================================================
 
@@ -397,7 +458,9 @@ window.db = {
     reverseGeocode,
     submitReport,
     getReports,
-    updateReportStatus
+    updateReportStatus,
+    getUserRole,
+    checkPermission
 };
 
 window.utils = {

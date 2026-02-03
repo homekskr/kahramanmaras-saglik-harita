@@ -4,6 +4,7 @@
 
 // Global state
 let currentUser = null;
+let userRole = null; // RBAC: User role and permissions
 let facilities = [];
 let filteredFacilities = [];
 let editingFacilityId = null;
@@ -424,8 +425,47 @@ function showDashboard() {
         document.getElementById('userEmail').textContent = currentUser.email;
     }
 
+    // Load user role and permissions (RBAC)
+    loadUserRole();
+
     // Load facilities
     loadFacilities();
+}
+
+// RBAC: Load user role and permissions
+async function loadUserRole() {
+    try {
+        const roleData = await window.db.getUserRole();
+        if (roleData.success) {
+            userRole = roleData;
+            console.log('User role loaded:', userRole);
+
+            // Update UI based on role
+            updateUIForRole();
+        }
+    } catch (error) {
+        console.error('Error loading user role:', error);
+        userRole = { role: null, allowedFacilityTypes: [] };
+    }
+}
+
+// RBAC: Update UI elements based on user role
+function updateUIForRole() {
+    if (!userRole || !userRole.role) return;
+
+    // If facility_manager, show only relevant facility types in filters
+    if (userRole.role === 'facility_manager' && userRole.allowedFacilityTypes.length > 0) {
+        const typeSelect = document.getElementById('filterType');
+        if (typeSelect) {
+            // Filter options to show only allowed types
+            const options = Array.from(typeSelect.options);
+            options.forEach(option => {
+                if (option.value && !userRole.allowedFacilityTypes.includes(parseInt(option.value))) {
+                    option.style.display = 'none';
+                }
+            });
+        }
+    }
 }
 
 async function loadInitialData() {
@@ -544,7 +584,16 @@ async function loadFacilities() {
 
         if (!result.success) throw new Error(result.error);
 
-        facilities = result.data || [];
+        let allFacilities = result.data || [];
+
+        // RBAC: Filter facilities based on user role
+        if (userRole && userRole.role === 'facility_manager' && userRole.allowedFacilityTypes.length > 0) {
+            allFacilities = allFacilities.filter(f =>
+                userRole.allowedFacilityTypes.includes(f.facility_type_id)
+            );
+        }
+
+        facilities = allFacilities;
         // Apply current filters instead of resetting them
         applyCurrentFilters();
 
@@ -2094,4 +2143,19 @@ async function handlePhotoUpload(slotId) {
     };
 
     fileInput.click();
+}
+
+// =====================================================
+// PWA - Service Worker Registration
+// =====================================================
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/haritayonetim/sw-admin.js')
+            .then((registration) => {
+                console.log('Admin SW registered:', registration.scope);
+            })
+            .catch((error) => {
+                console.log('Admin SW registration failed:', error);
+            });
+    });
 }

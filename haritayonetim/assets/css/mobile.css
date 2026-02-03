@@ -1,0 +1,370 @@
+/* =====================================================
+   MOBILE RESPONSIVENESS ENHANCEMENTS
+   Admin Panel - Comprehensive Mobile Optimization
+   ===================================================== */
+
+/* Tablet and Mobile */
+@media (max-width: 768px) {
+
+    /* Navbar/Sidebar */
+    .sidebar {
+        padding: 0 12px !important;
+        height: auto !important;
+        min-height: 60px !important;
+        flex-wrap: wrap !important;
+        position: fixed !important;
+        top: 0 !important;
+        z-index: 1001 !important;
+    }
+
+    .sidebar-header {
+        margin: 10px 0 !important;
+    }
+
+    .sidebar-header h2 {
+        font-size: 15px !important;
+    }
+
+    .sidebar-icon {
+        width: 24px !important;
+        height: 24px !important;
+    }
+
+    .sidebar-nav {
+        padding: 0 !important;
+        width: 100% !important;
+        order: 3 !important;
+        margin-bottom: 10px !important;
+        justify-content: flex-start !important;
+        overflow-x: auto !important;
+        gap: 4px !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .nav-item {
+        font-size: 12px !important;
+        padding: 8px 12px !important;
+        white-space: nowrap !important;
+        flex-shrink: 0;
+    }
+
+    .nav-item svg {
+        width: 16px !important;
+        height: 16px !important;
+    }
+
+    .sidebar-footer {
+        margin: 10px 0 !important;
+    }
+
+    .user-info {
+        margin-bottom: 0 !important;
+    }
+
+    .user-details {
+        display: none !important;
+    }
+
+    .user-avatar {
+        width: 32px !important;
+        height: 32px !important;
+    }
+
+    /* Main Content */
+    .main-content {
+        margin-left: 0 !important;
+        padding-top: 150px !important;
+    }
+
+    .content-header {
+        padding: 14px !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+
+    .header-left h1 {
+        font-size: 18px !important;
+    }
+
+    .header-left p {
+        font-size: 13px !important;
+    }
+
+    .content-section {
+        padding: 14px !important;
+    }
+
+    /* Toolbar */
+    .toolbar {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    .search-box {
+        width: 100% !important;
+        min-width: 100% !important;
+    }
+
+    .filter-group {
+        width: 100% !important;
+        flex-wrap: wrap !important;
+    }
+
+    .filter-select {
+        flex: 1 !important;
+        min-width: 110px !important;
+        font-size: 13px !important;
+    }
+
+    .status-filter-group {
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .status-tab {
+        font-size: 12px !important;
+        padding: 6px 12px !important;
+    }
+
+    /* Tables - Convert to Cards on Mobile */
+    .table-container {
+        border: none !important;
+        background: transparent !important;
+        overflow: visible !important;
+    }
+
+    .data-table {
+        border: 0 !important;
+    }
+
+    .data-table thead {
+        display: none !important;
+    }
+
+    .data-table tbody {
+        display: block !important;
+    }
+
+    .data-table tr {
+        display: block !important;
+        background: var(--bg-primary) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 10px !important;
+        margin-bottom: 10px !important;
+        padding: 14px !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .data-table tr:hover {
+        background: var(--bg-secondary) !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .data-table td {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        border: none !important;
+        padding: 8px 0 !important;
+        text-align: left !important;
+        font-size: 14px !important;
+    }
+
+    .data-table td::before {
+        content: attr(data-label);
+        font-weight: 600 !important;
+        color: var(--text-secondary) !important;
+        font-size: 11px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        flex: 0 0 40%;
+    }
+
+    .data-table td:not(:last-child) {
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .table-actions {
+        justify-content: flex-end !important;
+        margin-top: 6px !important;
+        width: 100%;
+    }
+
+    /* Forms */
+    .form-row {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+    }
+
+    .form-group {
+        margin-bottom: 16px !important;
+    }
+
+    .form-group label {
+        font-size: 13px !important;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        font-size: 16px !important;
+        /* Prevent zoom on iOS */
+        padding: 12px 14px !important;
+    }
+
+    .form-group small {
+        font-size: 12px !important;
+    }
+
+    /* Modals - Bottom Sheet Style */
+    .modal {
+        padding: 0 !important;
+        align-items: flex-end !important;
+    }
+
+    .modal-content {
+        max-width: 100% !important;
+        width: 100% !important;
+        max-height: 92vh !important;
+        border-radius: 16px 16px 0 0 !important;
+        margin: 0 !important;
+        animation: slideUpMobile 0.3s ease-out !important;
+    }
+
+    @keyframes slideUpMobile {
+        from {
+            transform: translateY(100%);
+        }
+
+        to {
+            transform: translateY(0);
+        }
+    }
+
+    .modal-header {
+        padding: 16px !important;
+        border-bottom: 2px solid var(--border-color) !important;
+    }
+
+    .modal-header h2 {
+        font-size: 17px !important;
+    }
+
+    .modal-body {
+        padding: 16px !important;
+        max-height: calc(92vh - 140px) !important;
+    }
+
+    .modal-footer {
+        padding: 14px !important;
+        gap: 8px !important;
+    }
+
+    /* Buttons - Touch Friendly (44px minimum) */
+    .btn {
+        min-height: 46px !important;
+        padding: 12px 18px !important;
+        font-size: 14px !important;
+    }
+
+    .btn-sm {
+        min-height: 40px !important;
+        padding: 10px 14px !important;
+        font-size: 13px !important;
+    }
+
+    .btn-icon {
+        width: 46px !important;
+        height: 46px !important;
+    }
+
+    .btn svg {
+        width: 20px !important;
+        height: 20px !important;
+    }
+
+    /* Location Picker */
+    .location-map {
+        height: 220px !important;
+    }
+
+    /* Photo Upload Grid */
+    .photo-upload-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    .photo-preview {
+        max-width: 100% !important;
+        aspect-ratio: 16/10 !important;
+    }
+
+    .photo-upload-btn {
+        width: 100% !important;
+    }
+
+    /* Import/Export Section */
+    .file-upload-area {
+        padding: 32px 16px !important;
+    }
+
+    .import-instructions {
+        padding: 14px !important;
+    }
+
+    .import-instructions h3 {
+        font-size: 14px !important;
+    }
+
+    .import-instructions ol {
+        font-size: 12px !important;
+    }
+}
+
+/* Extra Small Devices (Phones in portrait) */
+@media (max-width: 480px) {
+    .main-content {
+        padding-top: 170px !important;
+    }
+
+    .sidebar-header h2 {
+        font-size: 13px !important;
+    }
+
+    .nav-item {
+        font-size: 11px !important;
+        padding: 6px 10px !important;
+    }
+
+    .content-header h1 {
+        font-size: 16px !important;
+    }
+
+    .btn {
+        font-size: 13px !important;
+    }
+
+    .modal-header h2 {
+        font-size: 16px !important;
+    }
+
+    .data-table td {
+        font-size: 13px !important;
+    }
+
+    .data-table td::before {
+        font-size: 10px !important;
+    }
+}
+
+/* Landscape Orientation Fixes */
+@media (max-height: 500px) and (orientation: landscape) {
+    .modal-content {
+        max-height: 85vh !important;
+    }
+
+    .modal-body {
+        max-height: calc(85vh - 120px) !important;
+    }
+}
