@@ -497,7 +497,7 @@ function renderFacilitiesTable() {
                         </svg>
                     </button>
                     <label class="switch" title="${facility.is_active ? 'Pasif Yap' : 'Aktif Yap'}">
-                        <input type="checkbox" ${facility.is_active ? 'checked' : ''} onchange="toggleFacilityStatus('${facility.id}', ${facility.is_active})">
+                        <input type="checkbox" ${facility.is_active ? 'checked' : ''} onchange="toggleFacilityStatus('${facility.id}', this.checked)">
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -1493,28 +1493,29 @@ async function confirmDeleteReport(reportId) {
 // STATUS MANAGEMENT
 // =====================================================
 
-async function toggleFacilityStatus(id, currentStatus) {
-    const newStatus = !currentStatus;
+async function toggleFacilityStatus(id, newStatus) {
+    // 1. Optimistic UI update (update locally and re-render immediately)
+    const updateLocalState = (arr) => {
+        const f = arr.find(item => item.id == id);
+        if (f) f.is_active = newStatus;
+    };
+
+    updateLocalState(facilities);
+    updateLocalState(filteredFacilities);
+    renderFacilitiesTable();
 
     try {
         const result = await window.db.updateFacility(id, { is_active: newStatus });
 
         if (result.success) {
-            // Update local state instead of reloading everything for better UX
-            const facility = facilities.find(f => f.id === id);
-            if (facility) {
-                facility.is_active = newStatus;
-            }
-
             showToast(newStatus ? 'Tesis aktif edildi' : 'Tesis pasif edildi');
-            applyCurrentFilters();
         } else {
             throw new Error(result.error);
         }
     } catch (error) {
         console.error('Error toggling facility status:', error);
         showToast('Durum güncellenirken hata oluştu', 'error');
-        // Re-render to revert toggle switch state in UI
-        renderFacilitiesTable();
+        // Revert by reloading fresh data
+        loadFacilities();
     }
 }
