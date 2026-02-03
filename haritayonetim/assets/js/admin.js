@@ -30,19 +30,38 @@ function getFacilityIcon(facility) {
 // =====================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Check if user is already logged in
-    const { data: { session } } = await window.supabase.auth.getSession();
+    console.log('Admin panel initializing...');
 
-    if (session) {
-        currentUser = session.user;
-        await loadInitialData();
-        showDashboard();
-    } else {
-        showLogin();
-    }
-
-    displayFacilities();
+    // Always setup event listeners first to ensure buttons work
     setupEventListeners();
+
+    try {
+        // Check if supabase is initialized
+        if (!window.supabase) {
+            console.error('Supabase client not found (window.supabase is undefined).');
+            showLogin();
+            return;
+        }
+
+        // Check if user is already logged in
+        const { data: { session }, error: sessionError } = await window.supabase.auth.getSession();
+
+        if (sessionError) throw sessionError;
+
+        if (session) {
+            console.log('Active session found:', session.user.email);
+            currentUser = session.user;
+            await loadInitialData().catch(err => console.error('Initial data loading failed:', err));
+            showDashboard();
+        } else {
+            console.log('No active session, showing login.');
+            showLogin();
+        }
+    } catch (error) {
+        console.error('Initialization error:', error);
+        showLogin();
+        // Even if session check fails, we already called setupEventListeners()
+    }
 });
 
 /**
@@ -347,6 +366,7 @@ async function handleLogin(e) {
 }
 
 async function handleLogout() {
+    console.log('Logout button clicked');
     try {
         await window.supabase.auth.signOut();
         currentUser = null;
@@ -445,6 +465,7 @@ function handleNavigation(e) {
     e.preventDefault();
 
     const section = e.currentTarget.dataset.section;
+    console.log('Navigation clicked:', section);
 
     // Update active nav item
     document.querySelectorAll('.nav-item').forEach(item => {
@@ -597,6 +618,7 @@ function handleFilter(e) {
 // =====================================================
 
 function openFacilityModal(facility = null) {
+    console.log('Opening facility modal', facility ? 'Edit mode' : 'Add mode');
     const modal = document.getElementById('facilityModal');
     const form = document.getElementById('facilityForm');
     const title = document.getElementById('modalTitle');
