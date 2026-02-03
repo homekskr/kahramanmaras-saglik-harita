@@ -752,6 +752,51 @@ function setupEventListeners() {
             e.target.value = masked.trim();
         });
     }
+
+    // Coordinate (Lat/Lng) masking - Refined
+    const coordinateMask = (e) => {
+        let val = e.target.value.replace(/[^\d.]/g, ''); // Sadece rakam ve nokta
+
+        // Önce noktaları temizleyip rakamları normalize edelim
+        let digits = val.replace(/\./g, '');
+
+        // Maksimum hane sınırlaması (2 tam + 10 ondalık)
+        if (digits.length > 12) digits = digits.substring(0, 12);
+
+        if (digits.length > 2) {
+            val = digits.substring(0, 2) + '.' + digits.substring(2);
+        } else if (digits.length === 2 && e.inputType !== 'deleteContentBackward') {
+            // Tam 2 rakam olduğunda otomatik nokta ekle
+            val = digits + '.';
+        } else {
+            val = digits;
+        }
+
+        e.target.value = val;
+    };
+
+    const latInput = document.getElementById('suggested-latitude');
+    const lngInput = document.getElementById('suggested-longitude');
+    if (latInput) latInput.addEventListener('input', coordinateMask);
+    if (lngInput) lngInput.addEventListener('input', coordinateMask);
+
+    // Email validation (.com.tr pattern)
+    const emailInput = document.getElementById('suggested-email');
+    if (emailInput) {
+        emailInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.toLowerCase();
+        });
+
+        emailInput.addEventListener('blur', (e) => {
+            const val = e.target.value;
+            if (val && !/^[a-z0-9._%+-]+@[a-z0-9.-]+\.com\.tr$/.test(val)) {
+                showStatus('E-posta adresi formatı uygun değil (Örn: deneme@kurum.com.tr)', 'error');
+                e.target.style.borderColor = 'var(--danger)';
+            } else {
+                e.target.style.borderColor = 'var(--border)';
+            }
+        });
+    }
 }
 
 // =====================================================
