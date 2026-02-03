@@ -691,11 +691,35 @@ function openFacilityModal(facility = null) {
         }
         document.getElementById('facilityLat').value = facility.latitude;
         document.getElementById('facilityLng').value = facility.longitude;
-        document.getElementById('facilityImage').value = facility.image_url || '';
+
+        // Handle Photos
+        for (let i = 1; i <= 3; i++) {
+            const url = facility[`image_${i}`] || '';
+            document.getElementById(`facilityImage${i}`).value = url;
+            const preview = document.querySelector(`.photo-preview[data-slot="${i}"]`);
+            if (preview) {
+                if (url) {
+                    preview.style.backgroundImage = `url(${url})`;
+                    preview.classList.add('has-image');
+                } else {
+                    preview.style.backgroundImage = 'none';
+                    preview.classList.remove('has-image');
+                }
+            }
+        }
     } else {
         // Add mode
         title.textContent = 'Yeni Tesis Ekle';
         form.reset();
+        // Clear previews
+        document.querySelectorAll('.photo-preview').forEach(p => {
+            p.style.backgroundImage = 'none';
+            p.classList.remove('has-image');
+        });
+        // Clear hidden inputs
+        for (let i = 1; i <= 3; i++) {
+            document.getElementById(`facilityImage${i}`).value = '';
+        }
         // Leave coordinates empty - will be filled by geocoding or map click
         document.getElementById('facilityLat').value = '';
         document.getElementById('facilityLng').value = '';
@@ -879,7 +903,9 @@ async function handleSaveFacility(e) {
             address: address,
             latitude: lat,
             longitude: lng,
-            image_url: document.getElementById('facilityImage').value || null
+            image_1: document.getElementById('facilityImage1').value || null,
+            image_2: document.getElementById('facilityImage2').value || null,
+            image_3: document.getElementById('facilityImage3').value || null
         };
 
         let result;
@@ -1948,4 +1974,124 @@ async function handleExcelExport() {
         btn.disabled = false;
         btn.innerHTML = originalText;
     }
+}
+
+/**
+ * Image Compression / Optimization Logic
+ * Resizes to 1200px (long edge) and converts to WebP/JPEG
+ */
+async function compressImage(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 1200;
+                const MAX_HEIGHT = 1200;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Use WebP if supported, otherwise JPEG
+                const type = 'image/webp';
+                canvas.toBlob((blob) => {
+                    resolve(blob);
+                }, type, 0.82); // 0.82 quality balance
+            };
+        };
+    });
+}
+
+/**
+ * Upload to Supabase Storage
+ */
+async function uploadToSupabase(blob, slotId) {
+    const fileName = `facility_${Date.now()}_${slotId}.webp`;
+    const filePath = `${fileName}`;
+
+    const { data, error } = await window.supabase.storage
+        .from('facility-photos')
+        .upload(filePath, blob, {
+            contentType: 'image/webp',
+            upsert: true
+        });
+
+    if (error) throw error;
+
+    // Get public URL
+    const { data: publicUrlData } = window.supabase.storage
+        .from('facility-photos')
+        .getPublicUrl(filePath);
+
+    return publicUrlData.publicUrl;
+}
+
+/**
+ * Photos Upload Handler
+ */
+async function handlePhotoUpload(slotId) {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.capture = 'environment'; // Suggest camera on mobile
+
+    fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const btn = document.querySelector(`.photo-upload-btn[data-slot="${slotId}"]`);
+        const preview = document.querySelector(`.photo-preview[data-slot="${slotId}"]`);
+        const input = document.getElementById(`facilityImage${slotId}`);
+        const originalText = btn.innerHTML;
+
+        try {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-small"></span> Küçültülüyor...';
+
+            const compressedBlob = await compressImage(file);
+
+            btn.innerHTML = '<span class="spinner-small"></span> Yükleniyor...';
+            const url = await uploadToSupabase(compressedBlob, slotId);
+
+            // Update UI
+            input.value = url;
+            preview.style.backgroundImage = `url(${url})`;
+            preview.classList.add('has-image');
+            btn.innerHTML = '✓ Başarılı';
+            btn.classList.add('btn-success');
+
+            setTimeout(() => {
+                btn.innerHTML = 'Değiştir';
+                btn.classList.remove('btn-success');
+                btn.disabled = false;
+            }, 2000);
+
+        } catch (err) {
+            console.error('Fotoğraf yükleme hatası:', err);
+            showToast('Yükleme hatası: ' + err.message, 'error');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    };
+
+    fileInput.click();
 }

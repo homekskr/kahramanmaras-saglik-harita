@@ -1258,3 +1258,30 @@ body {
 .popup-btn-report:hover {
     background: #fee2e2 !important;
 }
+/* Gallery Styles */
+.popup-gallery, .details-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.details-gallery {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+.popup-photo, .gallery-item img {
+    width: 100%;
+    aspect-ratio: 16/10;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: zoom-in;
+    transition: transform 0.2s, box-shadow 0.2s;
+    background: #f1f5f9;
+}
+.popup-photo:hover, .gallery-item img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.details-gallery .gallery-item {
+    width: 100%;
+}

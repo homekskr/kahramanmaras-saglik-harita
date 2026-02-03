@@ -341,6 +341,10 @@ function createPopupContent(facility) {
                 <h3 class="popup-title">${window.utils.escapeHTML(facility.name)}</h3>
             </div>
             <div class="popup-body">
+                ${(facility.image_1 || facility.image_2 || facility.image_3) ? `
+                <div class="popup-gallery">
+                    ${[1, 2, 3].map(i => facility[`image_${i}`] ? `<img src="${facility[`image_${i}`]}" class="popup-photo" onclick="window.open('${facility[`image_${i}`]}', '_blank')">` : '').join('')}
+                </div>` : ''}
                 ${facility.address ? `<div class="popup-info"><strong>📮 Adres:</strong> ${window.utils.escapeHTML(facility.address)}</div>` : ''}
                 ${facility.phone ? `<div class="popup-info"><strong>📞 Telefon:</strong> <a href="tel:${facility.phone}">${window.utils.escapeHTML(facility.phone)}</a></div>` : ''}
                 ${facility.email ? `<div class="popup-info"><strong>📧 E-posta:</strong> <a href="mailto:${facility.email}">${window.utils.escapeHTML(facility.email)}</a></div>` : ''}
@@ -388,6 +392,14 @@ function renderFacilityDetails(facility) {
                 <span class="details-type-icon">${getFacilityIcon(facility)}</span>
             </div>
             <div class="details-body">
+                ${(facility.image_1 || facility.image_2 || facility.image_3) ? `
+                <div class="details-gallery">
+                    ${[1, 2, 3].map(i => facility[`image_${i}`] ? `
+                        <div class="gallery-item">
+                            <img src="${facility[`image_${i}`]}" alt="${facility.name}" onclick="window.open('${facility[`image_${i}`]}', '_blank')">
+                        </div>
+                    ` : '').join('')}
+                </div>` : ''}
                 <div class="details-info">
                     <strong>📮</strong>
                     <span>${window.utils.escapeHTML(facility.address) || 'Adres bilgisi yok'}</span>
