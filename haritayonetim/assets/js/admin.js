@@ -230,6 +230,14 @@ function setupEventListeners() {
     document.getElementById('downloadDbBackupBtn')?.addEventListener('click', () => handleDatabaseBackup('json'));
     document.getElementById('downloadSqlBackupBtn')?.addEventListener('click', () => handleDatabaseBackup('sql'));
     document.getElementById('downloadFilesBackupBtn')?.addEventListener('click', handleFilesBackup);
+
+    // Individual table SQL backups
+    document.querySelectorAll('.table-backup-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const tableName = e.currentTarget.dataset.table;
+            handleDatabaseBackup('sql', tableName);
+        });
+    });
 }
 
 // Phone number formatter
@@ -1615,64 +1623,94 @@ async function toggleFacilityStatus(id, newStatus) {
 // SYSTEM BACKUP
 // =====================================================
 
-async function handleDatabaseBackup(format = 'json') {
-    const btnId = format === 'json' ? 'downloadDbBackupBtn' : 'downloadSqlBackupBtn';
-    const btn = document.getElementById(btnId);
-    const originalText = btn.innerHTML;
-
-    if (typeof saveAs === 'undefined') {
-        showToast('Yedekleme kütüphanesi (FileSaver.js) yüklenemedi. Lütfen internet bağlantınızı kontrol edin.', 'error');
+/**
+ * Universal download trigger that doesn't rely on FileSaver.js
+ */
+function triggerDownload(blob, fileName) {
+    if (typeof saveAs !== 'undefined') {
+        saveAs(blob, fileName);
         return;
     }
 
-    btn.disabled = true;
-    btn.innerHTML = `
-        <svg class="spinner" viewBox="0 0 24 24" style="width: 18px; height: 18px;">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" opacity="0.25" />
-            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="4" fill="none" />
-        </svg>
-        ${format.toUpperCase()}...
-    `;
+    console.log('FileSaver.js not found, using browser fallback for:', fileName);
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+
+async function handleDatabaseBackup(format = 'json', tableName = null) {
+    // Determine which button triggered this (optional for SQL table-specific)
+    let btn;
+    if (tableName) {
+        btn = document.querySelector(`[data-table="${tableName}"]`);
+    } else {
+        const btnId = format === 'json' ? 'downloadDbBackupBtn' : 'downloadSqlBackupBtn';
+        btn = document.getElementById(btnId);
+    }
+
+    const originalText = btn ? btn.innerHTML : '';
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `
+            <svg class="spinner" viewBox="0 0 24 24" style="width: 18px; height: 18px;">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" opacity="0.25" />
+                <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="4" fill="none" />
+            </svg>
+            ...
+        `;
+    }
 
     try {
-        showToast(`${format.toUpperCase()} yedeği hazırlanıyor...`, 'info');
+        const label = tableName ? `${tableName} tablosu` : format.toUpperCase();
+        showToast(`${label} yedeği hazırlanıyor...`, 'info');
 
-        // Fetch all data in parallel
-        const results = await Promise.all([
-            window.supabase.from('districts').select('*'),
-            window.supabase.from('facility_types').select('*'),
-            window.supabase.from('facilities').select('*'),
-            window.supabase.from('facility_reports').select('*')
-        ]);
+        // Identify which tables to fetch
+        const tableList = tableName ? [tableName] : ['districts', 'facility_types', 'facilities', 'facility_reports'];
 
-        // Check for errors in any of the results
+        // Fetch data
+        const queries = tableList.map(t => window.supabase.from(t).select('*'));
+        const results = await Promise.all(queries);
+
+        // Check for errors
         const errors = results.filter(r => r.error).map(r => r.error.message);
         if (errors.length > 0) {
             throw new Error('Veritabanı hatası: ' + errors.join(', '));
         }
 
-        const [districts, types, facilities, reports] = results.map(r => r.data || []);
+        const dataObjects = results.map(r => r.data || []);
 
         let blob;
         let fileName;
+        const dateStr = new Date().toISOString().split('T')[0];
 
         if (format === 'json') {
             const backupData = {
                 version: '1.0',
                 timestamp: new Date().toISOString(),
-                data: { districts, facility_types: types, facilities, facility_reports: reports }
+                data: {}
             };
+            tableList.forEach((t, i) => backupData.data[t] = dataObjects[i]);
+
             blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
-            fileName = `saglik_harita_yedek_${new Date().toISOString().split('T')[0]}.json`;
+            fileName = tableName ? `yedek_${tableName}_${dateStr}.json` : `saglik_harita_yedek_${dateStr}.json`;
         } else {
             // SQL Export
             let sqlOutput = `-- Sağlık Haritası Veritabanı Yedeği\n`;
-            sqlOutput += `-- Oluşturma Tarihi: ${new Date().toLocaleString()}\n\n`;
+            sqlOutput += `-- Oluşturma Tarihi: ${new Date().toLocaleString()}\n`;
+            if (tableName) sqlOutput += `-- Tablo: ${tableName}\n`;
+            sqlOutput += `\n`;
 
-            const generateInserts = (tableName, data) => {
-                if (!data || data.length === 0) return `-- ${tableName} tablosu boş\n\n`;
+            const generateInserts = (name, data) => {
+                if (!data || data.length === 0) return `-- ${name} tablosu boş\n\n`;
 
-                let sql = `-- ${tableName} tablosu\n`;
+                let sql = `-- ${name} tablosu\n`;
                 const columns = Object.keys(data[0]);
 
                 data.forEach(row => {
@@ -1684,28 +1722,29 @@ async function handleDatabaseBackup(format = 'json') {
                         if (typeof val === 'object') return `'${JSON.stringify(val).replace(/'/g, "''")}'`;
                         return val;
                     });
-                    sql += `INSERT INTO ${tableName} (${columns.join(', ')}) VALUES (${values.join(', ')});\n`;
+                    sql += `INSERT INTO ${name} (${columns.join(', ')}) VALUES (${values.join(', ')});\n`;
                 });
                 return sql + '\n';
             };
 
-            sqlOutput += generateInserts('districts', districts);
-            sqlOutput += generateInserts('facility_types', types);
-            sqlOutput += generateInserts('facilities', facilities);
-            sqlOutput += generateInserts('facility_reports', reports);
+            tableList.forEach((t, i) => {
+                sqlOutput += generateInserts(t, dataObjects[i]);
+            });
 
             blob = new Blob([sqlOutput], { type: 'text/plain' });
-            fileName = `saglik_harita_yedek_${new Date().toISOString().split('T')[0]}.sql`;
+            fileName = tableName ? `yedek_${tableName}_${dateStr}.sql` : `saglik_harita_yedek_${dateStr}.sql`;
         }
 
-        saveAs(blob, fileName);
-        showToast(`${format.toUpperCase()} yedeği başarıyla indirildi`, 'success');
+        triggerDownload(blob, fileName);
+        showToast('Yedekleme başarıyla tamamlandı', 'success');
     } catch (error) {
         console.error('Database backup error:', error);
         showToast('Yedek alınırken hata oluştu: ' + error.message, 'error');
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
     }
 }
 
@@ -1722,6 +1761,12 @@ async function handleFilesBackup() {
     }
 
     const btnText = btn.innerHTML;
+
+    // Fallback for JSZip if needed
+    if (typeof JSZip === 'undefined') {
+        showToast('Dosya sıkıştırma kütüphanesi (JSZip) yüklenemedi.', 'error');
+        return;
+    }
 
     progressArea.style.display = 'block';
     updateProgress(0, 'Dosya listesi hazırlanıyor...');
@@ -1770,7 +1815,7 @@ async function handleFilesBackup() {
         });
 
         updateProgress(100, 'Tamamlandı!');
-        saveAs(content, `saglik_harita_dosyalar_${new Date().toISOString().split('T')[0]}.zip`);
+        triggerDownload(content, `saglik_harita_dosyalar_${new Date().toISOString().split('T')[0]}.zip`);
         showToast('Dosya yedeği başarıyla indirildi', 'success');
 
         setTimeout(() => {
