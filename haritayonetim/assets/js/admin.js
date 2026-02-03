@@ -227,7 +227,8 @@ function setupEventListeners() {
     document.getElementById('reportSearchInput')?.addEventListener('input', handleReportSearch);
 
     // Backup buttons
-    document.getElementById('downloadDbBackupBtn')?.addEventListener('click', handleDatabaseBackup);
+    document.getElementById('downloadDbBackupBtn')?.addEventListener('click', () => handleDatabaseBackup('json'));
+    document.getElementById('downloadSqlBackupBtn')?.addEventListener('click', () => handleDatabaseBackup('sql'));
     document.getElementById('downloadFilesBackupBtn')?.addEventListener('click', handleFilesBackup);
 }
 
@@ -1614,9 +1615,15 @@ async function toggleFacilityStatus(id, newStatus) {
 // SYSTEM BACKUP
 // =====================================================
 
-async function handleDatabaseBackup() {
-    const btn = document.getElementById('downloadDbBackupBtn');
+async function handleDatabaseBackup(format = 'json') {
+    const btnId = format === 'json' ? 'downloadDbBackupBtn' : 'downloadSqlBackupBtn';
+    const btn = document.getElementById(btnId);
     const originalText = btn.innerHTML;
+
+    if (typeof saveAs === 'undefined') {
+        showToast('Yedekleme kütüphanesi (FileSaver.js) yüklenemedi. Lütfen internet bağlantınızı kontrol edin.', 'error');
+        return;
+    }
 
     btn.disabled = true;
     btn.innerHTML = `
@@ -1624,39 +1631,78 @@ async function handleDatabaseBackup() {
             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" opacity="0.25" />
             <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="4" fill="none" />
         </svg>
-        Hazırlanıyor...
+        ${format.toUpperCase()}...
     `;
 
     try {
-        showToast('Veritabanı yedeği hazırlanıyor...', 'info');
+        showToast(`${format.toUpperCase()} yedeği hazırlanıyor...`, 'info');
 
         // Fetch all data in parallel
-        const [districts, types, facilities, reports] = await Promise.all([
+        const results = await Promise.all([
             window.supabase.from('districts').select('*'),
             window.supabase.from('facility_types').select('*'),
             window.supabase.from('facilities').select('*'),
             window.supabase.from('facility_reports').select('*')
         ]);
 
-        const backupData = {
-            version: '1.0',
-            timestamp: new Date().toISOString(),
-            data: {
-                districts: districts.data || [],
-                facility_types: types.data || [],
-                facilities: facilities.data || [],
-                facility_reports: reports.data || []
-            }
-        };
+        // Check for errors in any of the results
+        const errors = results.filter(r => r.error).map(r => r.error.message);
+        if (errors.length > 0) {
+            throw new Error('Veritabanı hatası: ' + errors.join(', '));
+        }
 
-        const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
-        const fileName = `saglik_harita_yedek_${new Date().toISOString().split('T')[0]}.json`;
+        const [districts, types, facilities, reports] = results.map(r => r.data || []);
+
+        let blob;
+        let fileName;
+
+        if (format === 'json') {
+            const backupData = {
+                version: '1.0',
+                timestamp: new Date().toISOString(),
+                data: { districts, facility_types: types, facilities, facility_reports: reports }
+            };
+            blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+            fileName = `saglik_harita_yedek_${new Date().toISOString().split('T')[0]}.json`;
+        } else {
+            // SQL Export
+            let sqlOutput = `-- Sağlık Haritası Veritabanı Yedeği\n`;
+            sqlOutput += `-- Oluşturma Tarihi: ${new Date().toLocaleString()}\n\n`;
+
+            const generateInserts = (tableName, data) => {
+                if (!data || data.length === 0) return `-- ${tableName} tablosu boş\n\n`;
+
+                let sql = `-- ${tableName} tablosu\n`;
+                const columns = Object.keys(data[0]);
+
+                data.forEach(row => {
+                    const values = columns.map(col => {
+                        const val = row[col];
+                        if (val === null) return 'NULL';
+                        if (typeof val === 'string') return `'${val.replace(/'/g, "''")}'`;
+                        if (typeof val === 'boolean') return val ? 'TRUE' : 'FALSE';
+                        if (typeof val === 'object') return `'${JSON.stringify(val).replace(/'/g, "''")}'`;
+                        return val;
+                    });
+                    sql += `INSERT INTO ${tableName} (${columns.join(', ')}) VALUES (${values.join(', ')});\n`;
+                });
+                return sql + '\n';
+            };
+
+            sqlOutput += generateInserts('districts', districts);
+            sqlOutput += generateInserts('facility_types', types);
+            sqlOutput += generateInserts('facilities', facilities);
+            sqlOutput += generateInserts('facility_reports', reports);
+
+            blob = new Blob([sqlOutput], { type: 'text/plain' });
+            fileName = `saglik_harita_yedek_${new Date().toISOString().split('T')[0]}.sql`;
+        }
 
         saveAs(blob, fileName);
-        showToast('Veritabanı yedeği başarıyla indirildi', 'success');
+        showToast(`${format.toUpperCase()} yedeği başarıyla indirildi`, 'success');
     } catch (error) {
         console.error('Database backup error:', error);
-        showToast('Veritabanı yedeği alınırken hata oluştu', 'error');
+        showToast('Yedek alınırken hata oluştu: ' + error.message, 'error');
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
@@ -1670,8 +1716,12 @@ async function handleFilesBackup() {
     const progressLabel = document.getElementById('backupProgressLabel');
     const progressPercent = document.getElementById('backupProgressPercent');
 
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
+    if (typeof JSZip === 'undefined' || typeof saveAs === 'undefined') {
+        showToast('Gerekli kütüphaneler (JSZip/FileSaver) yüklenemedi.', 'error');
+        return;
+    }
+
+    const btnText = btn.innerHTML;
 
     progressArea.style.display = 'block';
     updateProgress(0, 'Dosya listesi hazırlanıyor...');
@@ -1729,11 +1779,20 @@ async function handleFilesBackup() {
 
     } catch (error) {
         console.error('Files backup error:', error);
-        showToast('Dosya yedeği alınırken hata oluştu', 'error');
+        showToast('Dosya yedeği alınırken hata oluştu: ' + error.message, 'error');
         progressArea.style.display = 'none';
     } finally {
         btn.disabled = false;
-        btn.innerHTML = originalText;
+        // Restore original HTML
+        const downloadIcon = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Dosyaları İndir (.zip)
+        `;
+        btn.innerHTML = downloadIcon;
     }
 
     function updateProgress(percent, label) {

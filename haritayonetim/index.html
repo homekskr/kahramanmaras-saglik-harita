@@ -283,17 +283,28 @@
                             </div>
                             <h3 style="margin-bottom: 12px;">Veritabanı Yedeği</h3>
                             <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;">
-                                Tüm tesisleri, türleri, ilçeleri ve hata bildirimlerini içeren veritabanı yedeğini JSON
-                                formatında indirin.
+                                Tüm tesisleri, türleri, ilçeleri ve hata bildirimlerini içeren veritabanı yedeğini
+                                indirin.
                             </p>
-                            <button id="downloadDbBackupBtn" class="btn btn-primary btn-block">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                    <polyline points="7 10 12 15 17 10" />
-                                    <line x1="12" y1="15" x2="12" y2="3" />
-                                </svg>
-                                Veritabanını İndir (.json)
-                            </button>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <button id="downloadDbBackupBtn" class="btn btn-primary btn-block">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                        <polyline points="7 10 12 15 17 10" />
+                                        <line x1="12" y1="15" x2="12" y2="3" />
+                                    </svg>
+                                    JSON
+                                </button>
+                                <button id="downloadSqlBackupBtn" class="btn btn-ghost btn-block"
+                                    style="border-color: var(--primary); color: var(--primary);">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                        <polyline points="7 10 12 15 17 10" />
+                                        <line x1="12" y1="15" x2="12" y2="3" />
+                                    </svg>
+                                    SQL
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Files Backup Card -->
