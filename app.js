@@ -789,8 +789,8 @@ function setupEventListeners() {
 
         emailInput.addEventListener('blur', (e) => {
             const val = e.target.value;
-            if (val && !/^[a-z0-9._%+-]+@[a-z0-9.-]+\.com\.tr$/.test(val)) {
-                showStatus('E-posta adresi formatı uygun değil (Örn: deneme@kurum.com.tr)', 'error');
+            if (val && !/^[a-z0-9._%+-]+@saglik\.gov\.tr$/.test(val)) {
+                showStatus('E-posta adresi formatı uygun değil (Örn: kahramanmaras@saglik.gov.tr)', 'error');
                 e.target.style.borderColor = 'var(--danger)';
             } else {
                 e.target.style.borderColor = 'var(--border)';
