@@ -255,6 +255,7 @@ async function handleLogin(e) {
         if (error) throw error;
 
         currentUser = data.user;
+        await loadInitialData();
         showDashboard();
 
     } catch (error) {
@@ -299,18 +300,24 @@ function showDashboard() {
 }
 
 async function loadInitialData() {
-    // Load districts
-    const districtsResult = await window.db.getDistricts();
-    if (districtsResult.success) {
-        districts = districtsResult.data;
-        populateDistrictOptions();
-    }
+    try {
+        // Load both in parallel for better performance
+        const [districtsResult, typesResult] = await Promise.all([
+            window.db.getDistricts(),
+            window.db.getFacilityTypes()
+        ]);
 
-    // Load facility types
-    const typesResult = await window.db.getFacilityTypes();
-    if (typesResult.success) {
-        facilityTypes = typesResult.data;
-        populateTypeOptions();
+        if (districtsResult.success) {
+            districts = districtsResult.data;
+            populateDistrictOptions();
+        }
+
+        if (typesResult.success) {
+            facilityTypes = typesResult.data;
+            populateTypeOptions();
+        }
+    } catch (error) {
+        console.error('Error in loadInitialData:', error);
     }
 }
 
