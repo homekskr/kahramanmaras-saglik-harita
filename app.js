@@ -728,6 +728,30 @@ function setupEventListeners() {
     if (reportForm) {
         reportForm.addEventListener('submit', handleReportSubmit);
     }
+
+    // Dynamic Input transformations
+    document.querySelectorAll('.upper-input').forEach(input => {
+        input.addEventListener('input', (e) => {
+            e.target.value = e.target.value.toLocaleUpperCase('tr-TR');
+        });
+    });
+
+    const phoneInput = document.getElementById('suggested-phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', (e) => {
+            let val = e.target.value.replace(/\D/g, '');
+            if (val.length > 10) val = val.substring(0, 11);
+
+            let masked = "";
+            if (val.length > 0) masked += val[0];
+            if (val.length > 1) masked += " " + val.substring(1, 4);
+            if (val.length > 4) masked += " " + val.substring(4, 7);
+            if (val.length > 7) masked += " " + val.substring(7, 9);
+            if (val.length > 9) masked += " " + val.substring(9, 11);
+
+            e.target.value = masked.trim();
+        });
+    }
 }
 
 // =====================================================

@@ -1153,7 +1153,9 @@ body {
 
 .form-group select,
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.suggestion-field input,
+.suggestion-field textarea {
     width: 100%;
     padding: 0.75rem;
     border: 2px solid var(--border);
@@ -1166,10 +1168,16 @@ body {
 
 .form-group input:focus,
 .form-group textarea:focus,
-.form-group select:focus {
+.form-group select:focus,
+.suggestion-field input:focus,
+.suggestion-field textarea:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.upper-input {
+    text-transform: uppercase;
 }
 
 /* Suggestion Fields Styling */
