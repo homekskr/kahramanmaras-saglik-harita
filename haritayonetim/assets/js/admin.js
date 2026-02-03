@@ -152,6 +152,9 @@ function setupEventListeners() {
         addFacilityBtn.addEventListener('click', () => openFacilityModal());
     }
 
+    // Excel Export
+    document.getElementById('exportExcelBtn')?.addEventListener('click', handleExcelExport);
+
     // Facility form
     const facilityForm = document.getElementById('facilityForm');
     if (facilityForm) {
@@ -1840,5 +1843,92 @@ async function handleFilesBackup() {
         progressBar.style.width = percent + '%';
         progressPercent.textContent = percent + '%';
         progressLabel.textContent = label;
+    }
+}
+
+// =====================================================
+// EXCEL EXPORT
+// =====================================================
+
+async function handleExcelExport() {
+    const btn = document.getElementById('exportExcelBtn');
+    if (!btn) return;
+
+    const originalText = btn.innerHTML;
+
+    btn.disabled = true;
+    btn.innerHTML = `
+        <svg class="spinner" viewBox="0 0 24 24" style="width: 18px; height: 18px;">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" opacity="0.25" />
+            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="4" fill="none" />
+        </svg>
+        Hazırlanıyor...
+    `;
+
+    try {
+        if (typeof XLSX === 'undefined') {
+            throw new Error('Excel kütüphanesi (SheetJS) yüklenemedi.');
+        }
+
+        showToast('Veriler hazırlanıyor...', 'info');
+
+        // Fetch all data
+        const [facilitiesRes, districtsRes, typesRes] = await Promise.all([
+            window.supabase.from('facilities').select('*'),
+            window.supabase.from('districts').select('*'),
+            window.supabase.from('facility_types').select('*')
+        ]);
+
+        if (facilitiesRes.error) throw facilitiesRes.error;
+        if (districtsRes.error) throw districtsRes.error;
+        if (typesRes.error) throw typesRes.error;
+
+        const districtsMap = {};
+        districtsRes.data.forEach(d => districtsMap[d.id] = d.name);
+
+        const typesMap = {};
+        typesRes.data.forEach(t => typesMap[t.id] = t.name);
+
+        const exportData = facilitiesRes.data.map(f => ({
+            'Tesis Adı': f.name,
+            'Tesis Türü': typesMap[f.type_id] || f.type_id,
+            'İlçe': districtsMap[f.district_id] || f.district_id,
+            'Adres': f.address || '',
+            'Enlem': f.latitude || '',
+            'Boylam': f.longitude || '',
+            'Kurum Kodu': f.kurum_kodu || '',
+            'Telefon': f.phone || '',
+            'Hizmet Durumu': f.status || ''
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Tesisler');
+
+        // Set column widths for better readability
+        const wscols = [
+            { wch: 40 }, // Tesis Adı
+            { wch: 30 }, // Tesis Türü
+            { wch: 20 }, // İlçe
+            { wch: 50 }, // Adres
+            { wch: 15 }, // Enlem
+            { wch: 15 }, // Boylam
+            { wch: 15 }, // Kurum Kodu
+            { wch: 20 }, // Telefon
+            { wch: 15 }  // Hizmet Durumu
+        ];
+        worksheet['!cols'] = wscols;
+
+        // Generate and save
+        const dateStr = new Date().toISOString().split('T')[0];
+        XLSX.writeFile(workbook, `tesis_listesi_${dateStr}.xlsx`);
+
+        showToast('Excel dosyası başarıyla indirildi', 'success');
+    } catch (error) {
+        console.error('Export error:', error);
+        showToast('Dışa aktarma hatası: ' + error.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     }
 }
