@@ -1394,10 +1394,12 @@ function renderReportsTable() {
     }
 
     const typeLabels = {
-        'location': '📍 Lokasyon',
-        'contact': '📞 İletişim',
-        'address': '📮 Adres',
-        'name': '🏷️ İsim',
+        'location': '📍 Hatalı Konum',
+        'phone': '📞 Hatalı Telefon',
+        'email': '📧 Hatalı E-posta',
+        'website': '🌐 Hatalı Web Sitesi',
+        'address': '🏠 Hatalı Adres',
+        'name': '🏷️ Hatalı İsim',
         'closed': '🚫 Kapalı',
         'other': '❓ Diğer'
     };
@@ -1408,35 +1410,46 @@ function renderReportsTable() {
         'rejected': '<span class="status-badge rejected">Reddedildi</span>'
     };
 
-    tbody.innerHTML = filteredReports.map(report => `
-        <tr class="${report.status}">
-            <td><strong>${report.facility?.name || 'Bilinmiyor'}</strong></td>
-            <td>${typeLabels[report.report_type] || report.report_type}</td>
-            <td>
-                <div class="report-note-cell" title="${report.reporter_note}">
-                    ${report.reporter_note}
-                </div>
-            </td>
-            <td>${statusLabels[report.status] || report.status}</td>
-            <td>${new Date(report.created_at).toLocaleDateString('tr-TR')}</td>
-            <td>
-                <div class="table-actions">
-                    ${report.status === 'pending' ? `
-                        <button class="btn btn-ghost btn-icon text-success" onclick="handleProcessReport('${report.id}', 'approved')" title="Onayla">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        </button>
-                        <button class="btn btn-ghost btn-icon text-danger" onclick="handleProcessReport('${report.id}', 'rejected')" title="Reddet">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        </button>
-                    ` : `
-                        <button class="btn btn-ghost btn-icon" onclick="confirmDeleteReport('${report.id}')" title="Sil">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-                        </button>
-                    `}
-                </div>
-            </td>
-        </tr>
-    `).join('');
+    tbody.innerHTML = filteredReports.map(report => {
+        let suggestionDisplay = '';
+        if (report.suggested_data && typeof report.suggested_data === 'object') {
+            const suggestions = Object.entries(report.suggested_data)
+                .map(([key, val]) => `<div class="suggestion-item"><strong>${key}:</strong> <span class="new-val">${val}</span></div>`)
+                .join('');
+            suggestionDisplay = `<div class="report-suggestions">${suggestions}</div>`;
+        }
+
+        return `
+            <tr class="${report.status}">
+                <td><strong>${report.facility?.name || 'Bilinmiyor'}</strong></td>
+                <td>${typeLabels[report.report_type] || report.report_type}</td>
+                <td>
+                    <div class="report-note-cell">
+                        ${report.reporter_note ? `<div class="note-text">${report.reporter_note}</div>` : ''}
+                        ${suggestionDisplay}
+                    </div>
+                </td>
+                <td>${statusLabels[report.status] || report.status}</td>
+                <td>${new Date(report.created_at).toLocaleDateString('tr-TR')}</td>
+                <td>
+                    <div class="table-actions">
+                        ${report.status === 'pending' ? `
+                            <button class="btn btn-ghost btn-icon text-success" onclick="handleProcessReport('${report.id}', 'approved')" title="Onayla ve Güncelle">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </button>
+                            <button class="btn btn-ghost btn-icon text-danger" onclick="handleProcessReport('${report.id}', 'rejected')" title="Reddet">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        ` : `
+                            <button class="btn btn-ghost btn-icon" onclick="confirmDeleteReport('${report.id}')" title="Sil">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                            </button>
+                        `}
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
 function handleReportSearch(e) {
@@ -1452,21 +1465,40 @@ function handleReportSearch(e) {
 }
 
 async function handleProcessReport(reportId, status) {
-    const message = status === 'approved' ? 'Bu bildirimi onaylamak istediğinize emin misiniz?' : 'Bu bildirimi reddetmek istediğinize emin misiniz?';
+    const report = reports.find(r => String(r.id) === String(reportId));
+    if (!report) return;
+
+    let message = status === 'approved' ? 'Bu bildirimi onaylamak ve önerilen değişiklikleri uygulamak istediğinize emin misiniz?' : 'Bu bildirimi reddetmek istediğinize emin misiniz?';
+    if (status === 'approved' && report.report_type === 'closed') {
+        message = 'Bu bildirimi onaylamak tesisi PASİF duruma getirecektir. Emin misiniz?';
+    }
 
     if (!confirm(message)) return;
 
     try {
+        // 1. If approved and there's suggested data, apply it to the facility
+        if (status === 'approved') {
+            if (report.suggested_data && Object.keys(report.suggested_data).length > 0) {
+                const updateResult = await window.db.updateFacility(report.facility_id, report.suggested_data);
+                if (!updateResult.success) throw new Error('Tesis bilgileri güncellenemedi: ' + updateResult.error);
+            } else if (report.report_type === 'closed') {
+                const updateResult = await window.db.updateFacility(report.facility_id, { is_active: false });
+                if (!updateResult.success) throw new Error('Tesis pasif yapılamadı: ' + updateResult.error);
+            }
+        }
+
+        // 2. Update report status
         const result = await window.db.updateReportStatus(reportId, status);
         if (result.success) {
-            showToast(status === 'approved' ? 'Bildirim onaylandı' : 'Bildirim reddedildi');
+            showToast(status === 'approved' ? 'Bildirim onaylandı ve tesis güncellendi' : 'Bildirim reddedildi');
             loadReports();
+            loadFacilities(); // Refresh facilities to show changes
         } else {
             throw new Error(result.error);
         }
     } catch (error) {
         console.error('Error processing report:', error);
-        showToast('Bildirim işlenirken hata oluştu', 'error');
+        showToast(error.message || 'Bildirim işlenirken hata oluştu', 'error');
     }
 }
 

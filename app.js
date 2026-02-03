@@ -769,6 +769,28 @@ function openReportModal(facilityId, facilityName) {
 function closeReportModal() {
     document.getElementById('reportModal').classList.remove('active');
     document.getElementById('reportForm').reset();
+    document.getElementById('suggestionFields').style.display = 'none';
+}
+
+function handleReportTypeChange(type) {
+    const fieldsContainer = document.getElementById('suggestionFields');
+    const allFields = document.querySelectorAll('.suggestion-field');
+
+    // Hide all first
+    allFields.forEach(f => f.style.display = 'none');
+
+    if (!type || type === 'other' || type === 'closed') {
+        fieldsContainer.style.display = 'none';
+        return;
+    }
+
+    fieldsContainer.style.display = 'block';
+
+    // Show relevant field
+    const targetField = document.getElementById(`field-${type}`);
+    if (targetField) {
+        targetField.style.display = 'block';
+    }
 }
 
 async function handleReportSubmit(e) {
@@ -779,6 +801,18 @@ async function handleReportSubmit(e) {
     const reportNote = document.getElementById('reportNote').value;
     const submitBtn = e.target.querySelector('button[type="submit"]');
 
+    // Get suggested data
+    const suggestedData = {};
+    if (reportType === 'name') suggestedData.name = document.getElementById('suggested-name').value;
+    if (reportType === 'phone') suggestedData.phone = document.getElementById('suggested-phone').value;
+    if (reportType === 'email') suggestedData.email = document.getElementById('suggested-email').value;
+    if (reportType === 'website') suggestedData.website = document.getElementById('suggested-website').value;
+    if (reportType === 'address') suggestedData.address = document.getElementById('suggested-address').value;
+    if (reportType === 'location') {
+        suggestedData.latitude = document.getElementById('suggested-latitude').value;
+        suggestedData.longitude = document.getElementById('suggested-longitude').value;
+    }
+
     submitBtn.disabled = true;
     submitBtn.textContent = 'Gönderiliyor...';
 
@@ -786,6 +820,7 @@ async function handleReportSubmit(e) {
         facility_id: facilityId,
         report_type: reportType,
         reporter_note: reportNote,
+        suggested_data: Object.keys(suggestedData).length > 0 ? suggestedData : null,
         status: 'pending'
     };
 
