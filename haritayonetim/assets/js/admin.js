@@ -1755,18 +1755,14 @@ async function handleFilesBackup() {
     const progressLabel = document.getElementById('backupProgressLabel');
     const progressPercent = document.getElementById('backupProgressPercent');
 
-    if (typeof JSZip === 'undefined' || typeof saveAs === 'undefined') {
-        showToast('Gerekli kütüphaneler (JSZip/FileSaver) yüklenemedi.', 'error');
+    // Only JSZip is strictly required; triggerDownload handles missing saveAs
+    if (typeof JSZip === 'undefined') {
+        showToast('Dosya sıkıştırma kütüphanesi (JSZip) yüklenemedi. Lütfen internet bağlantınızı kontrol edin.', 'error');
         return;
     }
 
     const btnText = btn.innerHTML;
-
-    // Fallback for JSZip if needed
-    if (typeof JSZip === 'undefined') {
-        showToast('Dosya sıkıştırma kütüphanesi (JSZip) yüklenemedi.', 'error');
-        return;
-    }
+    btn.disabled = true;
 
     progressArea.style.display = 'block';
     updateProgress(0, 'Dosya listesi hazırlanıyor...');
