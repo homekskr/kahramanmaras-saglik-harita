@@ -225,6 +225,10 @@ function setupEventListeners() {
 
     // Report search
     document.getElementById('reportSearchInput')?.addEventListener('input', handleReportSearch);
+
+    // Backup buttons
+    document.getElementById('downloadDbBackupBtn')?.addEventListener('click', handleDatabaseBackup);
+    document.getElementById('downloadFilesBackupBtn')?.addEventListener('click', handleFilesBackup);
 }
 
 // Phone number formatter
@@ -492,6 +496,12 @@ function handleNavigation(e) {
         document.getElementById('addFacilityBtn').style.display = 'none';
         document.getElementById('importExcelBtn').style.display = 'none';
         loadReports();
+    } else if (section === 'backup') {
+        document.getElementById('backupSection').style.display = 'block';
+        document.getElementById('pageTitle').textContent = 'Sistem Yedeği';
+        document.getElementById('pageSubtitle').textContent = 'Veritabanı ve dosya yedeği oluşturun';
+        document.getElementById('addFacilityBtn').style.display = 'none';
+        document.getElementById('importExcelBtn').style.display = 'none';
     }
 }
 
@@ -1597,5 +1607,138 @@ async function toggleFacilityStatus(id, newStatus) {
         showToast('Durum güncellenirken hata oluştu', 'error');
         // Revert by reloading fresh data
         loadFacilities();
+    }
+}
+
+// =====================================================
+// SYSTEM BACKUP
+// =====================================================
+
+async function handleDatabaseBackup() {
+    const btn = document.getElementById('downloadDbBackupBtn');
+    const originalText = btn.innerHTML;
+
+    btn.disabled = true;
+    btn.innerHTML = `
+        <svg class="spinner" viewBox="0 0 24 24" style="width: 18px; height: 18px;">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" opacity="0.25" />
+            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="4" fill="none" />
+        </svg>
+        Hazırlanıyor...
+    `;
+
+    try {
+        showToast('Veritabanı yedeği hazırlanıyor...', 'info');
+
+        // Fetch all data in parallel
+        const [districts, types, facilities, reports] = await Promise.all([
+            window.supabase.from('districts').select('*'),
+            window.supabase.from('facility_types').select('*'),
+            window.supabase.from('facilities').select('*'),
+            window.supabase.from('facility_reports').select('*')
+        ]);
+
+        const backupData = {
+            version: '1.0',
+            timestamp: new Date().toISOString(),
+            data: {
+                districts: districts.data || [],
+                facility_types: types.data || [],
+                facilities: facilities.data || [],
+                facility_reports: reports.data || []
+            }
+        };
+
+        const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+        const fileName = `saglik_harita_yedek_${new Date().toISOString().split('T')[0]}.json`;
+
+        saveAs(blob, fileName);
+        showToast('Veritabanı yedeği başarıyla indirildi', 'success');
+    } catch (error) {
+        console.error('Database backup error:', error);
+        showToast('Veritabanı yedeği alınırken hata oluştu', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+async function handleFilesBackup() {
+    const btn = document.getElementById('downloadFilesBackupBtn');
+    const progressArea = document.getElementById('backupProgressArea');
+    const progressBar = document.getElementById('backupProgressBar');
+    const progressLabel = document.getElementById('backupProgressLabel');
+    const progressPercent = document.getElementById('backupProgressPercent');
+
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+
+    progressArea.style.display = 'block';
+    updateProgress(0, 'Dosya listesi hazırlanıyor...');
+
+    try {
+        const zip = new JSZip();
+
+        // List of files to backup (frontend specific)
+        const filesToBackup = [
+            { path: '../index.html', name: 'index.html' },
+            { path: '../app.js', name: 'app.js' },
+            { path: '../sw.js', name: 'sw.js' },
+            { path: '../manifest.json', name: 'manifest.json' },
+            { path: 'index.html', name: 'haritayonetim/index.html' },
+            { path: 'assets/js/admin.js', name: 'haritayonetim/assets/js/admin.js' },
+            { path: 'assets/css/admin.css', name: 'haritayonetim/assets/css/admin.css' },
+            { path: '../assets/js/config.js', name: 'assets/js/config.js' },
+            { path: '../assets/images/hospital-icon.svg', name: 'assets/images/hospital-icon.svg' },
+            { path: '../assets/images/icon-192.png', name: 'assets/images/icon-192.png' },
+            { path: '../assets/images/icon-512.png', name: 'assets/images/icon-512.png' },
+            { path: '../assets/images/logo.png', name: 'assets/images/logo.png' },
+            { path: '../assets/kahramanmaras_border.json', name: 'assets/kahramanmaras_border.json' }
+        ];
+
+        const totalFiles = filesToBackup.length;
+
+        for (let i = 0; i < totalFiles; i++) {
+            const file = filesToBackup[i];
+            updateProgress(Math.round((i / totalFiles) * 50), `Dosya indiriliyor: ${file.name}`);
+
+            try {
+                const response = await fetch(file.path);
+                if (!response.ok) throw new Error(`Fetch failed: ${response.statusText}`);
+                const content = await response.blob();
+                zip.file(file.name, content);
+            } catch (err) {
+                console.warn(`Could not backup file: ${file.path}`, err);
+            }
+        }
+
+        updateProgress(60, 'ZIP arşivi oluşturuluyor...');
+
+        const content = await zip.generateAsync({ type: 'blob' }, (metadata) => {
+            const percent = 60 + Math.round(metadata.percent * 0.35); // Take 60% to 95%
+            updateProgress(percent, 'Dosyalar sıkıştırılıyor...');
+        });
+
+        updateProgress(100, 'Tamamlandı!');
+        saveAs(content, `saglik_harita_dosyalar_${new Date().toISOString().split('T')[0]}.zip`);
+        showToast('Dosya yedeği başarıyla indirildi', 'success');
+
+        setTimeout(() => {
+            progressArea.style.display = 'none';
+        }, 3000);
+
+    } catch (error) {
+        console.error('Files backup error:', error);
+        showToast('Dosya yedeği alınırken hata oluştu', 'error');
+        progressArea.style.display = 'none';
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+
+    function updateProgress(percent, label) {
+        progressBar.style.width = percent + '%';
+        progressPercent.textContent = percent + '%';
+        progressLabel.textContent = label;
     }
 }

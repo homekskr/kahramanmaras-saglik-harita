@@ -92,6 +92,14 @@
                     </svg>
                     <span>Hata Bildirimleri</span>
                 </a>
+                <a href="#" class="nav-item" data-section="backup">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    <span>Sistem Yedeği</span>
+                </a>
             </nav>
 
             <div class="sidebar-footer">
@@ -254,6 +262,82 @@
                             <!-- Reports will be loaded here -->
                         </tbody>
                     </table>
+                </div>
+            </section>
+
+            <!-- Backup Section -->
+            <section id="backupSection" class="content-section" style="display: none;">
+                <div class="backup-container">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                        <!-- Database Backup Card -->
+                        <div class="card"
+                            style="background: var(--bg-primary); padding: 32px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center;">
+                            <div
+                                style="width: 64px; height: 64px; background: rgba(37, 99, 235, 0.1); color: var(--primary); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    style="width: 32px; height: 32px; stroke-width: 2;">
+                                    <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                                </svg>
+                            </div>
+                            <h3 style="margin-bottom: 12px;">Veritabanı Yedeği</h3>
+                            <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;">
+                                Tüm tesisleri, türleri, ilçeleri ve hata bildirimlerini içeren veritabanı yedeğini JSON
+                                formatında indirin.
+                            </p>
+                            <button id="downloadDbBackupBtn" class="btn btn-primary btn-block">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                    <polyline points="7 10 12 15 17 10" />
+                                    <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
+                                Veritabanını İndir (.json)
+                            </button>
+                        </div>
+
+                        <!-- Files Backup Card -->
+                        <div class="card"
+                            style="background: var(--bg-primary); padding: 32px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center;">
+                            <div
+                                style="width: 64px; height: 64px; background: rgba(16, 185, 129, 0.1); color: var(--success); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    style="width: 32px; height: 32px; stroke-width: 2;">
+                                    <path
+                                        d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <h3 style="margin-bottom: 12px;">Dosya Yedeği</h3>
+                            <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;">
+                                Uygulamanın tüm kaynak kodlarını ve varlıklarını (HTML, JS, CSS, Görseller) ZIP arşivi
+                                olarak indirin.
+                            </p>
+                            <button id="downloadFilesBackupBtn" class="btn btn-ghost btn-block"
+                                style="color: var(--success); border-color: rgba(16, 185, 129, 0.5);">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                    <polyline points="7 10 12 15 17 10" />
+                                    <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
+                                Dosyaları İndir (.zip)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Progress Area (for potential long zipping) -->
+                    <div id="backupProgressArea"
+                        style="display: none; margin-top: 32px; padding: 24px; background: var(--bg-primary); border-radius: 12px; border: 1px solid var(--border-color);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span id="backupProgressLabel">Hazırlanıyor...</span>
+                            <span id="backupProgressPercent">0%</span>
+                        </div>
+                        <div style="background: var(--bg-tertiary); height: 8px; border-radius: 4px; overflow: hidden;">
+                            <div id="backupProgressBar"
+                                style="width: 0%; height: 100%; background: var(--primary); transition: width 0.3s;">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>
@@ -525,6 +609,8 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="../assets/js/config.js"></script>
     <script src="/haritayonetim/assets/js/admin.js"></script>
 </body>
