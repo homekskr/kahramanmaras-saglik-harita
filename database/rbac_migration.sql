@@ -23,8 +23,39 @@ CREATE POLICY "Users can view their own role" ON user_roles
     FOR SELECT TO authenticated
     USING (auth.uid() = user_id);
 
-DROP POLICY IF EXISTS "Admins can manage all roles" ON user_roles
-    FOR ALL TO authenticated
+DROP POLICY IF EXISTS "Admins can view all roles" ON user_roles;
+CREATE POLICY "Admins can view all roles" ON user_roles
+    FOR SELECT TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM user_roles
+            WHERE user_id = auth.uid() AND role = 'admin'
+        )
+    );
+
+DROP POLICY IF EXISTS "Admins can insert roles" ON user_roles;
+CREATE POLICY "Admins can insert roles" ON user_roles
+    FOR INSERT TO authenticated
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM user_roles
+            WHERE user_id = auth.uid() AND role = 'admin'
+        )
+    );
+
+DROP POLICY IF EXISTS "Admins can update roles" ON user_roles;
+CREATE POLICY "Admins can update roles" ON user_roles
+    FOR UPDATE TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM user_roles
+            WHERE user_id = auth.uid() AND role = 'admin'
+        )
+    );
+
+DROP POLICY IF EXISTS "Admins can delete roles" ON user_roles;
+CREATE POLICY "Admins can delete roles" ON user_roles
+    FOR DELETE TO authenticated
     USING (
         EXISTS (
             SELECT 1 FROM user_roles
@@ -37,9 +68,39 @@ DROP POLICY IF EXISTS "Admins can manage facilities" ON facilities;
 DROP POLICY IF EXISTS "Facility managers can view assigned types" ON facilities;
 DROP POLICY IF EXISTS "Facility managers can manage assigned types" ON facilities;
 
--- Admin: Full access
-CREATE POLICY "Admins can manage facilities" ON facilities
-    FOR ALL TO authenticated
+-- Admin: Full SELECT access
+CREATE POLICY "Admins can view facilities" ON facilities
+    FOR SELECT TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM user_roles
+            WHERE user_id = auth.uid() AND role = 'admin'
+        )
+    );
+
+-- Admin: INSERT access
+CREATE POLICY "Admins can insert facilities" ON facilities
+    FOR INSERT TO authenticated
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM user_roles
+            WHERE user_id = auth.uid() AND role = 'admin'
+        )
+    );
+
+-- Admin: UPDATE access
+CREATE POLICY "Admins can update facilities" ON facilities
+    FOR UPDATE TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM user_roles
+            WHERE user_id = auth.uid() AND role = 'admin'
+        )
+    );
+
+-- Admin: DELETE access
+CREATE POLICY "Admins can delete facilities" ON facilities
+    FOR DELETE TO authenticated
     USING (
         EXISTS (
             SELECT 1 FROM user_roles
@@ -59,9 +120,21 @@ CREATE POLICY "Facility managers can view assigned types" ON facilities
         )
     );
 
--- Facility Manager: Manage only assigned types
-CREATE POLICY "Facility managers can manage assigned types" ON facilities
-    FOR INSERT, UPDATE, DELETE TO authenticated
+-- Facility Manager: INSERT only assigned types
+CREATE POLICY "Facility managers can insert assigned types" ON facilities
+    FOR INSERT TO authenticated
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM user_roles
+            WHERE user_id = auth.uid() 
+            AND role = 'facility_manager'
+            AND facility_type_id = ANY(allowed_facility_types)
+        )
+    );
+
+-- Facility Manager: UPDATE only assigned types
+CREATE POLICY "Facility managers can update assigned types" ON facilities
+    FOR UPDATE TO authenticated
     USING (
         EXISTS (
             SELECT 1 FROM user_roles
@@ -69,8 +142,12 @@ CREATE POLICY "Facility managers can manage assigned types" ON facilities
             AND role = 'facility_manager'
             AND facility_type_id = ANY(allowed_facility_types)
         )
-    )
-    WITH CHECK (
+    );
+
+-- Facility Manager: DELETE only assigned types
+CREATE POLICY "Facility managers can delete assigned types" ON facilities
+    FOR DELETE TO authenticated
+    USING (
         EXISTS (
             SELECT 1 FROM user_roles
             WHERE user_id = auth.uid() 
