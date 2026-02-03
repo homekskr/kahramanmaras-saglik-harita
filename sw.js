@@ -32,25 +32,61 @@ self.addEventListener('install', event => {
     self.skipWaiting();
 });
 
-// Fetch event - Network First Strategy
+// Fetch event - Sophisticated Caching Strategy
 self.addEventListener('fetch', event => {
-    event.respondWith(
-        fetch(event.request)
-            .then(response => {
-                // Sadece GET isteklerini cache'le (POST, PUT vb. Cache API tarafından desteklenmez)
-                if (event.request.method === 'GET' && response.status === 200) {
+    const url = new URL(event.request.url);
+
+    // 1. Dynamic Data (Supabase) - Network Only/First (don't cache data queries in SW)
+    if (url.hostname.includes('supabase.co')) {
+        return; // Let browser handle it
+    }
+
+    // 2. HTML Files - Network First (Always get latest version if online)
+    if (event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname === '/') {
+        event.respondWith(
+            fetch(event.request)
+                .then(response => {
                     const responseToCache = response.clone();
-                    caches.open(CACHE_NAME)
-                        .then(cache => {
-                            cache.put(event.request, responseToCache);
-                        });
+                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache));
+                    return response;
+                })
+                .catch(() => caches.match(event.request))
+        );
+        return;
+    }
+
+    // 3. Static Assets (Images, Icons, Fonts) - Cache First
+    if (
+        url.pathname.includes('/assets/images/') ||
+        url.pathname.endsWith('.png') ||
+        url.pathname.endsWith('.ico') ||
+        url.hostname.includes('fonts.gstatic.com')
+    ) {
+        event.respondWith(
+            caches.match(event.request).then(response => {
+                return response || fetch(event.request).then(fetchResponse => {
+                    const responseToCache = fetchResponse.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache));
+                    return fetchResponse;
+                });
+            })
+        );
+        return;
+    }
+
+    // 4. Everything else (JS, CSS) - Stale-While-Revalidate
+    // Serve from cache immediately, update in background
+    event.respondWith(
+        caches.match(event.request).then(cachedResponse => {
+            const fetchPromise = fetch(event.request).then(networkResponse => {
+                if (networkResponse.status === 200) {
+                    const responseToCache = networkResponse.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache));
                 }
-                return response;
-            })
-            .catch(() => {
-                // Network başarısız - cache'den döndür
-                return caches.match(event.request);
-            })
+                return networkResponse;
+            });
+            return cachedResponse || fetchPromise;
+        })
     );
 });
 

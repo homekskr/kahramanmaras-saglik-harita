@@ -121,22 +121,29 @@ async function loadProvinceBorder() {
 async function loadInitialData() {
     showStatus('Veriler yükleniyor...', 'info');
 
-    // Load districts
-    const districtsResult = await window.db.getDistricts();
-    if (districtsResult.success) {
-        districts = districtsResult.data;
-        populateDistrictFilter();
-    }
+    try {
+        // Load districts and facility types in parallel
+        const [districtsResult, typesResult] = await Promise.all([
+            window.db.getDistricts(),
+            window.db.getFacilityTypes()
+        ]);
 
-    // Load facility types
-    const typesResult = await window.db.getFacilityTypes();
-    if (typesResult.success) {
-        facilityTypes = typesResult.data;
-        populateFacilityTypeFilter();
-    }
+        if (districtsResult.success) {
+            districts = districtsResult.data;
+            populateDistrictFilter();
+        }
 
-    // Load all facilities
-    await loadFacilities();
+        if (typesResult.success) {
+            facilityTypes = typesResult.data;
+            populateFacilityTypeFilter();
+        }
+
+        // Load all facilities after we have types and districts
+        await loadFacilities();
+    } catch (error) {
+        console.error('Initial data loading error:', error);
+        showStatus('Veriler yüklenirken bir hata oluştu', 'error');
+    }
 }
 
 async function loadFacilities() {
