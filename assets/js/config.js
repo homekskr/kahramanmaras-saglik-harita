@@ -136,12 +136,24 @@ async function getFacilitiesByType(typeId) {
 async function getFacilities() {
     try {
         const { data, error } = await window.supabase
-            .from('facilities_full')
-            .select('*')
+            .from('facilities')
+            .select(`
+                *,
+                district:districts(id, name),
+                facility_type:facility_types(id, name)
+            `)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
-        return { success: true, data };
+
+        // Transform to match expected format
+        const transformedData = data.map(facility => ({
+            ...facility,
+            district_name: facility.district?.name,
+            facility_type_name: facility.facility_type?.name
+        }));
+
+        return { success: true, data: transformedData };
     } catch (error) {
         console.error('Tesisler yüklenirken hata:', error);
         return { success: false, error: error.message };
