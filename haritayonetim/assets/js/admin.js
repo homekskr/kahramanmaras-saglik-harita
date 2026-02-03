@@ -41,9 +41,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         showLogin();
     }
 
-    // Setup event listeners
+    displayFacilities();
     setupEventListeners();
 });
+
+/**
+ * Modern Custom Confirm Dialog
+ */
+function showConfirm(title, message, type = 'primary') {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('confirmModal');
+        const titleEl = document.getElementById('confirmTitle');
+        const messageEl = document.getElementById('confirmMessage');
+        const okBtn = document.getElementById('confirmOkBtn');
+        const cancelBtn = document.getElementById('confirmCancelBtn');
+        const iconContainer = document.getElementById('confirmIcon');
+
+        titleEl.textContent = title || 'Onay Gerekiyor';
+        messageEl.textContent = message;
+
+        // Reset and set button classes
+        okBtn.className = 'btn ' + (type === 'danger' ? 'btn-danger' : 'btn-primary');
+        iconContainer.style.background = type === 'danger' ? 'rgba(220, 38, 38, 0.1)' : 'rgba(37, 99, 235, 0.1)';
+        iconContainer.querySelector('svg').style.color = type === 'danger' ? 'var(--danger)' : 'var(--primary)';
+
+        const handleConfirm = () => {
+            modal.classList.remove('active');
+            okBtn.removeEventListener('click', handleConfirm);
+            cancelBtn.removeEventListener('click', handleCancel);
+            resolve(true);
+        };
+
+        const handleCancel = () => {
+            modal.classList.remove('active');
+            okBtn.removeEventListener('click', handleConfirm);
+            cancelBtn.removeEventListener('click', handleCancel);
+            resolve(false);
+        };
+
+        okBtn.addEventListener('click', handleConfirm);
+        cancelBtn.addEventListener('click', handleCancel);
+
+        modal.classList.add('active');
+    });
+}
 
 // =====================================================
 // AUTHENTICATION
@@ -816,46 +857,29 @@ async function handleSaveFacility(e) {
 // DELETE FACILITY
 // =====================================================
 
-function confirmDeleteFacility(id, name) {
-    const modal = document.getElementById('deleteModal');
-    document.getElementById('deleteFacilityName').textContent = window.utils.escapeHTML(name);
-    modal.classList.add('active');
-
-    // Store facility ID for deletion
-    modal.dataset.facilityId = id;
-
-    // Setup delete confirmation
-    const confirmBtn = document.getElementById('confirmDeleteBtn');
-    confirmBtn.onclick = () => deleteFacility(id);
+async function confirmDeleteFacility(id, name) {
+    const confirmed = await showConfirm('Tesisi Sil', `${name} tesisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`, 'danger');
+    if (confirmed) {
+        deleteFacility(id);
+    }
 }
 
 function closeDeleteModal() {
-    const modal = document.getElementById('deleteModal');
-    modal.classList.remove('active');
+    // This function is now deprecated as we use showConfirm
 }
 
 async function deleteFacility(id) {
-    const confirmBtn = document.getElementById('confirmDeleteBtn');
-    confirmBtn.disabled = true;
-    confirmBtn.querySelector('.btn-text').style.display = 'none';
-    confirmBtn.querySelector('.btn-loader').style.display = 'inline-flex';
-
     try {
         const result = await window.db.deleteFacility(id);
 
         if (!result.success) throw new Error(result.error);
 
         showToast('Tesis başarıyla silindi', 'success');
-        closeDeleteModal();
         loadFacilities();
 
     } catch (error) {
         console.error('Error deleting facility:', error);
         showToast('Tesis silinirken bir hata oluştu', 'error');
-    } finally {
-        confirmBtn.disabled = false;
-        confirmBtn.querySelector('.btn-text').style.display = 'inline';
-        confirmBtn.querySelector('.btn-loader').style.display = 'none';
     }
 }
 
@@ -1473,7 +1497,8 @@ async function handleProcessReport(reportId, status) {
         message = 'Bu bildirimi onaylamak tesisi PASİF duruma getirecektir. Emin misiniz?';
     }
 
-    if (!confirm(message)) return;
+    const confirmed = await showConfirm(status === 'approved' ? 'Bildirimi Onayla' : 'Bildirimi Reddet', message, status === 'approved' ? 'primary' : 'danger');
+    if (!confirmed) return;
 
     try {
         // 1. If approved and there's suggested data, apply it to the facility
@@ -1503,7 +1528,8 @@ async function handleProcessReport(reportId, status) {
 }
 
 async function confirmDeleteReport(reportId) {
-    if (!confirm('Bu bildirimi silmek istediğinize emin misiniz?')) return;
+    const confirmed = await showConfirm('Bildirimi Sil', 'Bu bildirimi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.', 'danger');
+    if (!confirmed) return;
 
     try {
         const { error } = await window.supabase
