@@ -37,7 +37,7 @@ BEGIN
     
     -- facility_reports
     DROP POLICY IF EXISTS "Public can submit reports" ON facility_reports;
-    DROP POLICY IF EXISTS "Admins can view and manage reports" ON facility_reports;
+    DROP POLICY IF EXISTS "Admins can manage reports" ON facility_reports;
 END $$;
 
 -- 4. Create new refined policies
@@ -65,7 +65,7 @@ CREATE POLICY "Admins can manage facilities" ON facilities
 
 -- FACILITY REPORTS
 CREATE POLICY "Public can submit reports" ON facility_reports
-    FOR INSERT TO anon, authenticated WITH CHECK (status = 'pending');
+    FOR INSERT TO anon, authenticated WITH CHECK (true);
 
 CREATE POLICY "Admins can manage reports" ON facility_reports
     FOR ALL TO authenticated USING (true) WITH CHECK (true);
