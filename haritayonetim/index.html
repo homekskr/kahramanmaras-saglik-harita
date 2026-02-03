@@ -148,12 +148,18 @@
             <section id="facilitiesSection" class="content-section">
                 <!-- Search and Filter -->
                 <div class="toolbar">
+                    <div class="status-filter-group">
+                        <button class="status-tab active" data-status="all">Tüm Tesisler</button>
+                        <button class="status-tab" data-status="active">Aktif</button>
+                        <button class="status-tab" data-status="passive">Pasif</button>
+                    </div>
+
                     <div class="search-box">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <circle cx="11" cy="11" r="8" />
                             <path d="m21 21-4.35-4.35" />
                         </svg>
-                        <input type="text" id="searchInput" placeholder="Tesis ara...">
+                        <input type="text" id="searchInput" placeholder="Tesis, kod, adres veya telefon ara...">
                     </div>
 
                     <div class="filter-group">
@@ -196,9 +202,8 @@
                                 <th>Kurum Kodu</th>
                                 <th>Tür</th>
                                 <th>İlçe</th>
-                                <th>Web Sitesi</th>
-                                <th>E-posta</th>
-                                <th>Telefon</th>
+                                <th>İletişim</th>
+                                <th>Durum</th>
                                 <th>İşlemler</th>
                             </tr>
                         </thead>

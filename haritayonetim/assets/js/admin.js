@@ -14,6 +14,7 @@ let districts = [];
 let facilityTypes = [];
 let reports = [];
 let filteredReports = [];
+let currentStatusFilter = 'all';
 
 // Tesis ikonunu getir (Özellikle hastaneler için 'Ⓗ' ikonunu zorunlu yap)
 function getFacilityIcon(facility) {
@@ -111,6 +112,16 @@ function setupEventListeners() {
     // Navigation
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', handleNavigation);
+    });
+
+    // Status filter tabs
+    document.querySelectorAll('.status-tab').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
+            e.target.classList.add('active');
+            currentStatusFilter = e.target.dataset.status;
+            applyCurrentFilters();
+        });
     });
 
     // Phone number formatting
@@ -448,11 +459,11 @@ function renderFacilitiesTable() {
     if (filteredFacilities.length === 0) {
         tbody.innerHTML = `
             <tr class="empty-state">
-                <td colspan="8">
+                <td colspan="7">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
-                    <p>Henüz tesis bulunmuyor</p>
+                    <p>Filtrelere uygun tesis bulunamadı</p>
                 </td>
             </tr>
         `;
@@ -460,18 +471,23 @@ function renderFacilitiesTable() {
     }
 
     tbody.innerHTML = filteredFacilities.map(facility => `
-        <tr>
+        <tr class="${facility.is_active ? 'status-active' : 'status-passive'}">
             <td><strong>${window.utils.escapeHTML(facility.name)}</strong></td>
             <td>${window.utils.escapeHTML(facility.kurum_kodu) || '-'}</td>
             <td><span style="display:flex; align-items:center; gap:8px;">${getFacilityIcon(facility)} ${window.utils.escapeHTML(facility.facility_type_name || facility.type) || '-'}</span></td>
             <td>${window.utils.escapeHTML(facility.district_name || facility.district) || '-'}</td>
             <td>
-                ${facility.website ? `<a href="${facility.website}" target="_blank" class="btn btn-ghost btn-icon btn-sm" title="Web Sitesi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></a>` : '-'}
+                <div style="display:flex; gap:8px;">
+                    ${facility.website ? `<a href="${facility.website}" target="_blank" class="btn btn-ghost btn-icon btn-sm" title="Web Sitesi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></a>` : ''}
+                    ${facility.email ? `<a href="mailto:${facility.email}" class="btn btn-ghost btn-icon btn-sm" title="${facility.email}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></a>` : ''}
+                    ${facility.phone ? `<span class="btn btn-ghost btn-icon btn-sm" title="${facility.phone}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></span>` : ''}
+                </div>
             </td>
             <td>
-                ${facility.email ? `<a href="mailto:${facility.email}" class="btn btn-ghost btn-icon btn-sm" title="${facility.email}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></a>` : '-'}
+                <span class="status-badge ${facility.is_active ? 'active' : 'passive'}">
+                    ${facility.is_active ? 'Aktif' : 'Pasif'}
+                </span>
             </td>
-            <td>${facility.phone || '-'}</td>
             <td>
                 <div class="table-actions">
                     <button class="btn btn-ghost btn-icon" onclick="editFacility('${facility.id}')" title="Düzenle">
@@ -480,12 +496,10 @@ function renderFacilitiesTable() {
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                         </svg>
                     </button>
-                    <button class="btn btn-ghost btn-icon text-danger" onclick="confirmDeleteFacility('${facility.id}', '${facility.name.replace(/'/g, "\\'")}')" title="Sil">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                        </svg>
-                    </button>
+                    <label class="switch" title="${facility.is_active ? 'Pasif Yap' : 'Aktif Yap'}">
+                        <input type="checkbox" ${facility.is_active ? 'checked' : ''} onchange="toggleFacilityStatus('${facility.id}', ${facility.is_active})">
+                        <span class="slider"></span>
+                    </label>
                 </div>
             </td>
         </tr>
@@ -500,17 +514,30 @@ function applyCurrentFilters() {
     const type = typeFilter ? typeFilter.value.trim().toLocaleUpperCase('tr-TR') : '';
 
     filteredFacilities = facilities.filter(facility => {
-        // 1. Check Search Query
+        // 1. Check Smart Search Query (Cross-field search)
         const name = (facility.name || '').toLocaleLowerCase('tr-TR');
+        const code = (facility.kurum_kodu || '').toLocaleLowerCase('tr-TR');
         const district = (facility.district_name || facility.district || '').toLocaleLowerCase('tr-TR');
         const address = (facility.address || '').toLocaleLowerCase('tr-TR');
-        const matchesSearch = query === '' || name.includes(query) || district.includes(query) || address.includes(query);
+        const phone = (facility.phone || '').toLocaleLowerCase('tr-TR');
+        const fType = (facility.facility_type_name || facility.type || '').toLocaleLowerCase('tr-TR');
+
+        const searchPool = `${name} ${code} ${district} ${address} ${phone} ${fType}`;
+        const matchesSearch = query === '' || searchPool.includes(query);
 
         // 2. Check Type Filter
         const facilityType = (facility.facility_type_name || facility.type || '').trim().toLocaleUpperCase('tr-TR');
         const matchesType = type === '' || facilityType === type;
 
-        return matchesSearch && matchesType;
+        // 3. Check Status Filter
+        let matchesStatus = true;
+        if (currentStatusFilter === 'active') {
+            matchesStatus = facility.is_active === true;
+        } else if (currentStatusFilter === 'passive') {
+            matchesStatus = facility.is_active === false;
+        }
+
+        return matchesSearch && matchesType && matchesStatus;
     });
 
     renderFacilitiesTable();
@@ -1459,5 +1486,35 @@ async function confirmDeleteReport(reportId) {
     } catch (error) {
         console.error('Error deleting report:', error);
         showToast('Bildirim silinirken hata oluştu', 'error');
+    }
+}
+
+// =====================================================
+// STATUS MANAGEMENT
+// =====================================================
+
+async function toggleFacilityStatus(id, currentStatus) {
+    const newStatus = !currentStatus;
+
+    try {
+        const result = await window.db.updateFacility(id, { is_active: newStatus });
+
+        if (result.success) {
+            // Update local state instead of reloading everything for better UX
+            const facility = facilities.find(f => f.id === id);
+            if (facility) {
+                facility.is_active = newStatus;
+            }
+
+            showToast(newStatus ? 'Tesis aktif edildi' : 'Tesis pasif edildi');
+            applyCurrentFilters();
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error('Error toggling facility status:', error);
+        showToast('Durum güncellenirken hata oluştu', 'error');
+        // Re-render to revert toggle switch state in UI
+        renderFacilitiesTable();
     }
 }
