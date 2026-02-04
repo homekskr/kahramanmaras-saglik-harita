@@ -453,17 +453,30 @@ async function loadUserRole() {
 function updateUIForRole() {
     if (!userRole || !userRole.role) return;
 
-    // If facility_manager, show only relevant facility types in filters
-    if (userRole.role === 'facility_manager' && userRole.allowedFacilityTypes.length > 0) {
-        const typeSelect = document.getElementById('filterType');
-        if (typeSelect) {
-            // Filter options to show only allowed types
-            const options = Array.from(typeSelect.options);
-            options.forEach(option => {
-                if (option.value && !userRole.allowedFacilityTypes.includes(parseInt(option.value))) {
-                    option.style.display = 'none';
-                }
-            });
+    // If facility_manager
+    if (userRole.role === 'facility_manager') {
+        // 1. Hide non-relevant menu items
+        // We only want to show 'Tesisler' (facilities)
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+            const section = item.getAttribute('data-section');
+            if (section && section !== 'facilities') {
+                item.style.display = 'none';
+            }
+        });
+
+        // 2. Hide specific buttons/features if strictly limited types
+        if (userRole.allowedFacilityTypes.length > 0) {
+            const typeSelect = document.getElementById('filterType');
+            if (typeSelect) {
+                // Filter options to show only allowed types
+                const options = Array.from(typeSelect.options);
+                options.forEach(option => {
+                    if (option.value && !userRole.allowedFacilityTypes.includes(parseInt(option.value))) {
+                        option.style.display = 'none';
+                    }
+                });
+            }
         }
     }
 }
