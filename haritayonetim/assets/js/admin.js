@@ -868,11 +868,17 @@ function openFacilityModal(facility = null) {
                         // Admin Controls
                         const adminControls = document.createElement('div');
                         adminControls.className = 'admin-photo-controls';
-                        adminControls.style.cssText = 'position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); padding: 4px; display: flex; justify-content: space-around;';
+                        adminControls.style.cssText = 'position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.8); padding: 8px; display: flex; justify-content: space-evenly; align-items: center; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; backdrop-filter: blur(4px);';
                         adminControls.innerHTML = `
-                            <button type="button" onclick="approvePhoto('${facility.id}', ${i})" style="font-size:10px; background:#10b981; color:white; border:none; border-radius:4px; padding:2px 6px; cursor:pointer;">Onayla</button>
-                            <button type="button" onclick="rejectPhoto('${facility.id}', ${i})" style="font-size:10px; background:#ef4444; color:white; border:none; border-radius:4px; padding:2px 6px; cursor:pointer;">Reddet</button>
-                            <button type="button" onclick="viewPendingPhoto('${pendingUrl}')" style="font-size:10px; background:#3b82f6; color:white; border:none; border-radius:4px; padding:2px 6px; cursor:pointer;">Gör</button>
+                            <button type="button" onclick="approvePhoto('${facility.id}', ${i})" title="Bu fotoğrafı onayla" style="background: #10b981; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s;">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </button>
+                            <button type="button" onclick="viewPendingPhoto('${pendingUrl}')" title="Büyüt ve İncele" style="background: #3b82f6; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s;">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </button>
+                            <button type="button" onclick="rejectPhoto('${facility.id}', ${i})" title="Reddet ve Sil" style="background: #ef4444; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s;">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
                          `;
                         preview.appendChild(adminControls);
 
@@ -2366,7 +2372,57 @@ async function approvePhoto(facilityId, slot) {
 
         const pendingKey = `pending_image_${slot}`;
         const mainKey = `image_${slot}`;
-        const pendingUrl = currentFacility[pendingKey];
+        // Ensure these are global at the end of file (or here)
+        window.approvePhoto = approvePhoto;
+        window.rejectPhoto = rejectPhoto;
+        window.viewPendingPhoto = viewPendingPhoto;
+
+        function viewPendingPhoto(url) {
+            if (!url) return;
+
+            // Check if modal exists, if not create it
+            let modal = document.getElementById('photoViewModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'photoViewModal';
+                modal.className = 'modal';
+                // Ensure z-index is higher than everything else, including toast
+                modal.style.zIndex = '100000';
+                modal.style.display = 'none'; // Hidden by default, class 'active' controls visibility usually but we'll use flex
+                modal.style.alignItems = 'center';
+                modal.style.justifyContent = 'center';
+                modal.style.background = 'rgba(0,0,0,0.9)'; // Darker background
+
+                modal.innerHTML = `
+            <div class="modal-content" style="background: transparent; box-shadow: none; border: none; width: auto; max-width: 95vw; max-height: 95vh; padding: 0; display:flex; justify-content:center; align-items:center; position: relative;">
+                <button type="button" class="btn-close-white" style="position: absolute; top: -50px; right: 0; color: white; background: rgba(0,0,0,0.5); border: 2px solid white; border-radius: 50%; width: 40px; height: 40px; font-size: 24px; cursor: pointer; display:flex; align-items:center; justify-content:center; transition: all 0.2s;">&times;</button>
+                <img id="photoViewImg" src="" style="max-width: 100%; max-height: 90vh; border-radius: 4px; box-shadow: 0 0 20px rgba(0,0,0,0.8); object-fit: contain;">
+            </div>
+        `;
+                document.body.appendChild(modal);
+
+                // Close actions
+                const closeBtn = modal.querySelector('.btn-close-white');
+                closeBtn.onclick = () => {
+                    modal.classList.remove('active');
+                    setTimeout(() => modal.style.display = 'none', 300); // Wait for transition if any
+                };
+
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('active');
+                        setTimeout(() => modal.style.display = 'none', 300);
+                    }
+                };
+            }
+
+            const img = document.getElementById('photoViewImg');
+            img.src = url;
+
+            modal.style.display = 'flex';
+            // Small delay to allow display:flex to apply before adding class for opacity transition
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
 
         if (!pendingUrl) {
             showToast('Onaylanacak fotoğraf bulunamadı.', 'error');
@@ -2386,9 +2442,7 @@ async function approvePhoto(facilityId, slot) {
         // Refresh to update UI
         if (editingFacilityId && editingFacilityId == facilityId) {
             // If modal is open, reload it
-            const updated = await window.db.getFacilities(); // refresh cache
             // Re-find facility
-            // Ideally loadFacilities would run.
             loadFacilities().then(() => {
                 const newFac = facilities.find(f => f.id == facilityId);
                 if (newFac) openFacilityModal(newFac); // Refresh modal
@@ -2396,31 +2450,6 @@ async function approvePhoto(facilityId, slot) {
         } else {
             loadFacilities();
         }
-
-    } catch (err) {
-        console.error(err);
-        showToast('Onay işlemi başarısız: ' + err.message, 'error');
-    }
-}
-
-/**
- * Reject Pending Photo
- */
-async function rejectPhoto(facilityId, slot) {
-    if (!confirm('Bu fotoğrafı reddetmek istiyor musunuz? Bekleyen fotoğraf silinecektir.')) return;
-
-    try {
-        const pendingKey = `pending_image_${slot}`;
-        const updateData = {
-            [pendingKey]: null
-        };
-
-        const result = await window.db.updateFacility(facilityId, updateData);
-        if (!result.success) throw new Error(result.error);
-
-        showToast('Fotoğraf reddedildi ve silindi.', 'success');
-
-        // Refresh to update UI
         if (editingFacilityId && editingFacilityId == facilityId) {
             loadFacilities().then(() => {
                 const newFac = facilities.find(f => f.id == facilityId);
@@ -2431,10 +2460,47 @@ async function rejectPhoto(facilityId, slot) {
         }
 
     } catch (err) {
-        console.error(err);
-        showToast('Red işlemi başarısız: ' + err.message, 'error');
+        console.error('Error approving photo:', err);
+        showToast('İşlem başarısız oldu: ' + err.message, 'error');
     }
 }
+
+/**
+ * Reject Pending Photo
+ */
+async function rejectPhoto(facilityId, slot) {
+    // Modern confirm dialog
+    const confirmed = await showConfirm('Fotoğrafı Reddet', 'Bu fotoğrafı reddetmek istediğinize emin misiniz? Fotoğraf kalıcı olarak silinecektir.', 'danger');
+    if (!confirmed) return;
+
+    try {
+        const currentFacility = facilities.find(f => f.id == facilityId);
+        if (!currentFacility) throw new Error('Tesis bulunamadı');
+
+        const pendingKey = `pending_image_${slot}`;
+        const updateData = { [pendingKey]: null };
+
+        const result = await window.db.updateFacility(facilityId, updateData);
+        if (!result.success) throw new Error(result.error);
+
+        showToast('Fotoğraf reddedildi ve silindi.', 'info');
+
+        if (editingFacilityId && editingFacilityId == facilityId) {
+            loadFacilities().then(() => {
+                const newFac = facilities.find(f => f.id == facilityId);
+                if (newFac) openFacilityModal(newFac);
+            });
+        } else {
+            loadFacilities();
+        }
+
+    } catch (err) {
+        console.error('Error rejecting photo:', err);
+        showToast('İşlem başarısız oldu: ' + err.message, 'error');
+    }
+}
+
+
 
 /**
  * View Pending Photo
