@@ -2286,8 +2286,44 @@ async function compressImage(file) {
                     resolve(blob);
                 }, type, 0.82); // 0.82 quality balance
             };
+            img.onerror = () => reject(new Error('Görsel yüklenemedi'));
         };
+        reader.onerror = () => reject(new Error('Dosya okuma hatası'));
+        reader.readAsDataURL(file);
     });
+}
+
+// Handle photo deletion
+function handlePhotoDelete(slot) {
+    if (!confirm('Bu fotoğrafı silmek istediğinize emin misiniz?')) return;
+
+    // Clear hidden input
+    const input = document.getElementById(`facilityImage${slot}`);
+    if (input) {
+        input.value = '';
+    }
+
+    // Clear preview
+    const preview = document.querySelector(`.photo-preview[data-slot="${slot}"]`);
+    if (preview) {
+        preview.style.backgroundImage = 'none';
+        preview.classList.remove('has-image');
+
+        const badge = preview.querySelector('.pending-badge');
+        if (badge) badge.remove();
+
+        const controls = preview.querySelector('.admin-photo-controls');
+        if (controls) controls.remove();
+
+        preview.style.border = 'none';
+
+        // IMPORTANT: The delete button is inside the preview!
+        // If we want to keep it visible/invisible based on state, it's fine.
+        // But if we clear innerHTML, we lose it.
+        // The previous code re-generates it in openFacilityModal.
+        // But here we are just reacting to the click.
+        // Ideally we should just reset the UI state.
+    }
 }
 
 /**
