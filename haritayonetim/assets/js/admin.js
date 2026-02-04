@@ -645,6 +645,9 @@ function renderFacilitiesTable() {
         return;
     }
 
+    // Check if user has permission to change status
+    const canChangeStatus = !userRole || userRole.role !== 'facility_manager';
+
     tbody.innerHTML = filteredFacilities.map(facility => `
         <tr class="${facility.is_active ? 'status-active' : 'status-passive'}">
             <td><strong>${window.utils.escapeHTML(facility.name)}</strong></td>
@@ -671,10 +674,11 @@ function renderFacilitiesTable() {
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                         </svg>
                     </button>
+                    ${canChangeStatus ? `
                     <label class="switch" title="${facility.is_active ? 'Pasif Yap' : 'Aktif Yap'}">
                         <input type="checkbox" ${facility.is_active ? 'checked' : ''} onchange="toggleFacilityStatus('${facility.id}', this.checked)">
                         <span class="slider"></span>
-                    </label>
+                    </label>` : ''}
                 </div>
             </td>
         </tr>
