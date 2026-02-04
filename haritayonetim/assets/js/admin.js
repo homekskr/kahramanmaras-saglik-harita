@@ -465,7 +465,19 @@ function updateUIForRole() {
             }
         });
 
-        // 2. Hide specific buttons/features if strictly limited types
+        // 2. Hide specific action buttons
+        const restrictedButtons = [
+            'exportExcelBtn',
+            'importExcelBtn',
+            'addFacilityBtn'
+        ];
+
+        restrictedButtons.forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if (btn) btn.style.display = 'none';
+        });
+
+        // 3. Hide specific buttons/features if strictly limited types
         if (userRole.allowedFacilityTypes.length > 0) {
             const typeSelect = document.getElementById('filterType');
             if (typeSelect) {
