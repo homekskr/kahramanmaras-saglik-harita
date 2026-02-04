@@ -776,15 +776,74 @@ function openFacilityModal(facility = null) {
         // Handle Photos
         for (let i = 1; i <= 3; i++) {
             const url = facility[`image_${i}`] || '';
-            document.getElementById(`facilityImage${i}`).value = url;
+            const pendingUrl = facility[`pending_image_${i}`] || '';
+            const input = document.getElementById(`facilityImage${i}`);
             const preview = document.querySelector(`.photo-preview[data-slot="${i}"]`);
+
+            // Default: Show active image
+            let displayUrl = url;
+            let hasPending = !!pendingUrl;
+
+            // Set input value to current URL (so if saved without changes, it stays)
+            // If manager has pending, should we put pending URL in input? 
+            // If we do, saveFacility logic (newVal !== currentVal) needs to be careful.
+            // Let's keep input as active URL, but visual preview shows pending if enabled?
+            // User request: "normal admin kullanıcılar tarafından onaylandıktan sonra ön yüzde".
+            // So Manager should likely see what they uploaded (pending).
+
+            if (isFacilityManager) {
+                if (hasPending) {
+                    displayUrl = pendingUrl;
+                    // Update input so they see it as "current" state in form
+                    input.value = pendingUrl;
+                } else {
+                    input.value = url;
+                }
+            } else {
+                // Admin sees active image by default in input, but we'll show pending UI
+                input.value = url;
+            }
+
             if (preview) {
-                if (url) {
-                    preview.style.backgroundImage = `url(${url})`;
+                // clear previous content (badges etc)
+                // PRESERVE THE DELETE BUTTON
+                const deleteBtn = preview.querySelector('.photo-delete-btn');
+                preview.innerHTML = ''; // Clear everything
+                if (deleteBtn) preview.appendChild(deleteBtn);
+
+                if (displayUrl) {
+                    preview.style.backgroundImage = `url(${displayUrl})`;
                     preview.classList.add('has-image');
                 } else {
                     preview.style.backgroundImage = 'none';
                     preview.classList.remove('has-image');
+                }
+
+                // UI Overlay for Pending Status (Manager) or Approval (Admin)
+                if (hasPending) {
+                    if (isFacilityManager) {
+                        const badge = document.createElement('div');
+                        badge.className = 'pending-badge';
+                        badge.textContent = 'Onay Bekliyor';
+                        badge.style.cssText = 'position: absolute; bottom: 0; left: 0; right: 0; background: orange; color: white; font-size: 10px; padding: 2px; text-align: center;';
+                        preview.appendChild(badge);
+                    } else {
+                        // Admin Controls
+                        const adminControls = document.createElement('div');
+                        adminControls.className = 'admin-photo-controls';
+                        adminControls.style.cssText = 'position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); padding: 4px; display: flex; justify-content: space-around;';
+                        adminControls.innerHTML = `
+                            <button type="button" onclick="approvePhoto('${facility.id}', ${i})" style="font-size:10px; background:#10b981; color:white; border:none; border-radius:4px; padding:2px 6px; cursor:pointer;">Onayla</button>
+                            <button type="button" onclick="rejectPhoto('${facility.id}', ${i})" style="font-size:10px; background:#ef4444; color:white; border:none; border-radius:4px; padding:2px 6px; cursor:pointer;">Reddet</button>
+                            <button type="button" onclick="viewPendingPhoto('${pendingUrl}')" style="font-size:10px; background:#3b82f6; color:white; border:none; border-radius:4px; padding:2px 6px; cursor:pointer;">Gör</button>
+                         `;
+                        preview.appendChild(adminControls);
+
+                        // Valid indication that this slot has pending content differs from active
+                        preview.style.border = '2px dashed orange';
+                    }
+                } else {
+                    preview.style.border = 'none';
                 }
             }
         }
@@ -1020,6 +1079,9 @@ async function handleSaveFacility(e) {
         formatSocialMediaInput(twitterInput, 'https://x.com/');
         formatSocialMediaInput(nsosyalInput, 'https://nsosyal.com/profil/');
 
+        const currentFacility = facilities.find(f => f.id == editingFacilityId) || {};
+
+        // Prepare base form data
         const formData = {
             name: document.getElementById('facilityName').value,
             kurum_kodu: document.getElementById('facilityKurumKodu').value || null,
@@ -1034,11 +1096,49 @@ async function handleSaveFacility(e) {
             nsosyal: nsosyalInput.value || null,
             address: address,
             latitude: lat,
-            longitude: lng,
-            image_1: document.getElementById('facilityImage1').value || null,
-            image_2: document.getElementById('facilityImage2').value || null,
-            image_3: document.getElementById('facilityImage3').value || null
+            longitude: lng
+            // Images will be handled below based on role
         };
+
+        const isFacilityManager = userRole && userRole.role === 'facility_manager';
+
+        // Handle Images Logic
+        for (let i = 1; i <= 3; i++) {
+            const newVal = document.getElementById(`facilityImage${i}`).value || null;
+            const key = `image_${i}`;
+            const pendingKey = `pending_image_${i}`;
+            const currentVal = currentFacility[key] || null;
+
+            if (isFacilityManager) {
+                // Facility Manager Logic
+                if (newVal === null) {
+                    // Deletion: Apply immediately
+                    formData[key] = null;
+                    // Also clear any pending
+                    formData[pendingKey] = null;
+                } else if (newVal !== currentVal) {
+                    // Change/Addition: Send to pending
+                    formData[pendingKey] = newVal;
+                    // Do NOT update main image key (keep current or null)
+                    // But we must NOT send the key if we don't want to change it.
+                    // However, typical update replaces all fields.
+                    // We must ensure we don't overwrite the existing image with null or new value in the main column.
+                    // So we effectively exclude 'image_i' from formData, OR set it to currentVal.
+                    // Setting to currentVal is safer to respect "no change".
+                    formData[key] = currentVal;
+
+                    showToast(`Fotoğraf ${i} onaya gönderildi.`, 'info');
+                } else {
+                    // No change
+                    formData[key] = currentVal;
+                }
+            } else {
+                // Admin Logic: Apply directly
+                formData[key] = newVal;
+                // If Admin manually updates, clear pending for this slot to avoid confusion
+                formData[pendingKey] = null;
+            }
+        }
 
         let result;
         if (editingFacilityId) {
@@ -2178,8 +2278,106 @@ async function uploadToSupabase(blob, slotId) {
 }
 
 /**
- * Photos Upload Handler
+ * Approve Pending Photo
  */
+async function approvePhoto(facilityId, slot) {
+    if (!confirm('Bu fotoğrafı onaylamak istiyor musunuz?')) return;
+
+    try {
+        // We need to fetch current pending url first to move it
+        const currentFacility = facilities.find(f => f.id == facilityId);
+        if (!currentFacility) throw new Error('Tesis bulunamadı');
+
+        const pendingKey = `pending_image_${slot}`;
+        const mainKey = `image_${slot}`;
+        const pendingUrl = currentFacility[pendingKey];
+
+        if (!pendingUrl) {
+            showToast('Onaylanacak fotoğraf bulunamadı.', 'error');
+            return;
+        }
+
+        const updateData = {
+            [mainKey]: pendingUrl,
+            [pendingKey]: null
+        };
+
+        const result = await window.db.updateFacility(facilityId, updateData);
+        if (!result.success) throw new Error(result.error);
+
+        showToast('Fotoğraf onaylandı ve yayına alındı.', 'success');
+
+        // Refresh to update UI
+        if (editingFacilityId && editingFacilityId == facilityId) {
+            // If modal is open, reload it
+            const updated = await window.db.getFacilities(); // refresh cache
+            // Re-find facility
+            // Ideally loadFacilities would run.
+            loadFacilities().then(() => {
+                const newFac = facilities.find(f => f.id == facilityId);
+                if (newFac) openFacilityModal(newFac); // Refresh modal
+            });
+        } else {
+            loadFacilities();
+        }
+
+    } catch (err) {
+        console.error(err);
+        showToast('Onay işlemi başarısız: ' + err.message, 'error');
+    }
+}
+
+/**
+ * Reject Pending Photo
+ */
+async function rejectPhoto(facilityId, slot) {
+    if (!confirm('Bu fotoğrafı reddetmek istiyor musunuz? Bekleyen fotoğraf silinecektir.')) return;
+
+    try {
+        const pendingKey = `pending_image_${slot}`;
+        const updateData = {
+            [pendingKey]: null
+        };
+
+        const result = await window.db.updateFacility(facilityId, updateData);
+        if (!result.success) throw new Error(result.error);
+
+        showToast('Fotoğraf reddedildi ve silindi.', 'success');
+
+        // Refresh to update UI
+        if (editingFacilityId && editingFacilityId == facilityId) {
+            loadFacilities().then(() => {
+                const newFac = facilities.find(f => f.id == facilityId);
+                if (newFac) openFacilityModal(newFac);
+            });
+        } else {
+            loadFacilities();
+        }
+
+    } catch (err) {
+        console.error(err);
+        showToast('Red işlemi başarısız: ' + err.message, 'error');
+    }
+}
+
+/**
+ * View Pending Photo
+ */
+function viewPendingPhoto(url) {
+    // Reuse lightbox or open in new tab
+    if (window.openLightbox) {
+        window.openLightbox(url);
+    } else {
+        window.open(url, '_blank');
+    }
+}
+
+// Global exposure for onclick handlers
+window.approvePhoto = approvePhoto;
+window.rejectPhoto = rejectPhoto;
+window.viewPendingPhoto = viewPendingPhoto;
+window.handlePhotoDelete = handlePhotoDelete;
+window.handlePhotoUpload = handlePhotoUpload;
 async function handlePhotoUpload(slotId) {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';

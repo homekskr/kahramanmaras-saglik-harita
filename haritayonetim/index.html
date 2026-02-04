@@ -12,6 +12,7 @@
     <!-- Admin CSS -->
     <link rel="stylesheet" href="/haritayonetim/assets/css/admin.css">
     <link rel="stylesheet" href="/haritayonetim/assets/css/mobile.css">
+    <link rel="stylesheet" href="assets/css/photo_delete.css">
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="/haritayonetim/manifest.json">
@@ -547,7 +548,10 @@
                     <label>Tesis Fotoğrafları (Maks. 3 Adet)</label>
                     <div class="photo-upload-grid">
                         <div class="photo-slot">
-                            <div class="photo-preview" data-slot="1"></div>
+                            <div class="photo-preview" data-slot="1">
+                                <button type="button" class="photo-delete-btn" onclick="handlePhotoDelete(1)"
+                                    title="Fotoğrafı Sil">&times;</button>
+                            </div>
                             <button type="button" class="btn btn-ghost btn-sm photo-upload-btn" data-slot="1"
                                 onclick="handlePhotoUpload(1)">
                                 📷 Fotoğraf 1
@@ -555,7 +559,10 @@
                             <input type="hidden" id="facilityImage1" name="image_1">
                         </div>
                         <div class="photo-slot">
-                            <div class="photo-preview" data-slot="2"></div>
+                            <div class="photo-preview" data-slot="2">
+                                <button type="button" class="photo-delete-btn" onclick="handlePhotoDelete(2)"
+                                    title="Fotoğrafı Sil">&times;</button>
+                            </div>
                             <button type="button" class="btn btn-ghost btn-sm photo-upload-btn" data-slot="2"
                                 onclick="handlePhotoUpload(2)">
                                 📷 Fotoğraf 2
@@ -563,7 +570,10 @@
                             <input type="hidden" id="facilityImage2" name="image_2">
                         </div>
                         <div class="photo-slot">
-                            <div class="photo-preview" data-slot="3"></div>
+                            <div class="photo-preview" data-slot="3">
+                                <button type="button" class="photo-delete-btn" onclick="handlePhotoDelete(3)"
+                                    title="Fotoğrafı Sil">&times;</button>
+                            </div>
                             <button type="button" class="btn btn-ghost btn-sm photo-upload-btn" data-slot="3"
                                 onclick="handlePhotoUpload(3)">
                                 📷 Fotoğraf 3
