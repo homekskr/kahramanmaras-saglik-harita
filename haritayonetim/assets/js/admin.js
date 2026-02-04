@@ -834,9 +834,7 @@ function openFacilityModal(facility = null) {
             }
 
             if (preview) {
-                // clear previous content (badges etc)
-                // PRESERVE THE DELETE BUTTON if it exists, otherwise create it
-                // We create it fresh every time to ensure event listeners are clean
+                // Clear previous content but PRESERVE logic structure
                 preview.innerHTML = '';
 
                 const deleteBtn = document.createElement('button');
@@ -845,12 +843,8 @@ function openFacilityModal(facility = null) {
                 deleteBtn.innerHTML = '&times;';
                 deleteBtn.title = 'Fotoğrafı Sil';
 
-                // Use a closure or arrow function to ensure 'i' is correct
-                deleteBtn.onclick = function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handlePhotoDelete(i);
-                };
+                // Use string attribute to avoid potential scope/event bubbling issues
+                deleteBtn.setAttribute('onclick', `event.preventDefault(); event.stopPropagation(); handlePhotoDelete(${i});`);
 
                 preview.appendChild(deleteBtn);
 
@@ -2483,3 +2477,11 @@ if ('serviceWorker' in navigator) {
             });
     });
 }
+
+
+// Global exposure for onclick handlers
+window.approvePhoto = approvePhoto;
+window.rejectPhoto = rejectPhoto;
+window.viewPendingPhoto = viewPendingPhoto;
+window.handlePhotoDelete = handlePhotoDelete;
+window.handlePhotoUpload = handlePhotoUpload;
