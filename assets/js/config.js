@@ -144,7 +144,10 @@ async function getFacilities() {
             `)
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase error details:', error);
+            throw error;
+        }
 
         // Transform to match expected format
         const transformedData = data.map(facility => ({
@@ -153,10 +156,13 @@ async function getFacilities() {
             facility_type_name: facility.facility_type?.name
         }));
 
+        console.log('Facilities loaded:', transformedData.length);
         return { success: true, data: transformedData };
     } catch (error) {
         console.error('Tesisler yüklenirken hata:', error);
-        return { success: false, error: error.message };
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        return { success: false, error: error.message, data: [] };
     }
 }
 

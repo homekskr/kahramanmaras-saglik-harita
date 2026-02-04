@@ -341,10 +341,6 @@ function createPopupContent(facility) {
                 <h3 class="popup-title">${window.utils.escapeHTML(facility.name)}</h3>
             </div>
             <div class="popup-body">
-                ${(facility.image_1 || facility.image_2 || facility.image_3) ? `
-                <div class="popup-gallery">
-                    ${[1, 2, 3].map(i => facility[`image_${i}`] ? `<img src="${facility[`image_${i}`]}" class="popup-photo" onclick="window.open('${facility[`image_${i}`]}', '_blank')">` : '').join('')}
-                </div>` : ''}
                 ${facility.address ? `<div class="popup-info"><strong>📮 Adres:</strong> ${window.utils.escapeHTML(facility.address)}</div>` : ''}
                 ${facility.phone ? `<div class="popup-info"><strong>📞 Telefon:</strong> <a href="tel:${facility.phone}">${window.utils.escapeHTML(facility.phone)}</a></div>` : ''}
                 ${facility.email ? `<div class="popup-info"><strong>📧 E-posta:</strong> <a href="mailto:${facility.email}">${window.utils.escapeHTML(facility.email)}</a></div>` : ''}
@@ -359,6 +355,12 @@ function createPopupContent(facility) {
                         ${facility.nsosyal ? `<a href="${window.utils.escapeHTML(facility.nsosyal)}" target="_blank" class="social-link" title="NSosyal"><svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="11" fill="#00A8E8"/><text x="12" y="16" text-anchor="middle" fill="white" font-size="12" font-weight="bold" font-family="Arial">N</text></svg></a>` : ''}
                     </div>
                 </div>` : ''}
+
+                ${(facility.image_1 || facility.image_2 || facility.image_3) ? `
+                <div class="popup-gallery">
+                    ${[1, 2, 3].map(i => facility[`image_${i}`] ? `<img src="${facility[`image_${i}`]}" class="popup-photo" onclick="openLightbox('${facility[`image_${i}`]}')" title="Büyütmek için tıklayın">` : '').join('')}
+                </div>` : ''}
+
             </div>
             <div class="popup-actions">
                 <button class="popup-btn" onclick="getDirections(${facility.latitude}, ${facility.longitude}, '${facility.name}')">
@@ -376,6 +378,57 @@ function createPopupContent(facility) {
             </div>
         </div>
     `;
+}
+
+// =====================================================
+// LIGHTBOX FONKSİYONLARI
+// =====================================================
+function openLightbox(imageUrl) {
+    // Varsa eskisini kaldır
+    const existing = document.querySelector('.lightbox-overlay');
+    if (existing) existing.remove();
+
+    // Yeni lightbox oluştur
+    const lightbox = document.createElement('div');
+    lightbox.className = 'lightbox-overlay';
+    lightbox.innerHTML = `
+        <div class="lightbox-content">
+            <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+            <img src="${imageUrl}" class="lightbox-image" alt="Tesis Resmi">
+        </div>
+    `;
+
+    // Kapatma olayları
+    lightbox.onclick = function (e) {
+        if (e.target.classList.contains('lightbox-overlay')) {
+            closeLightbox();
+        }
+    };
+
+    // ESC tuşu ile kapatma
+    document.addEventListener('keydown', function escListener(e) {
+        if (e.key === 'Escape') {
+            closeLightbox();
+            document.removeEventListener('keydown', escListener);
+        }
+    });
+
+    document.body.appendChild(lightbox);
+
+    // Animasyon için küçük bir gecikme
+    setTimeout(() => {
+        lightbox.classList.add('active');
+    }, 10);
+}
+
+function closeLightbox() {
+    const lightbox = document.querySelector('.lightbox-overlay');
+    if (lightbox) {
+        lightbox.classList.remove('active');
+        setTimeout(() => {
+            lightbox.remove();
+        }, 300);
+    }
 }
 
 function renderFacilityDetails(facility) {
