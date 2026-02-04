@@ -653,13 +653,13 @@ function renderFacilitiesTable() {
         // Simplified view for Facility Manager
         if (isFacilityManager) {
             return `
-            <tr class="facility-card-simple" style="padding: 12px 16px !important; min-height: auto !important;">
-                <td style="display: flex; justify-content: space-between; align-items: center; width: 100%; border: none !important; padding: 0 !important;">
-                    <div style="text-align: left; font-weight: 600; font-size: 14px; color: #1e293b; padding-right: 12px; line-height: 1.4;">
+            <tr class="facility-card-simple" style="padding: 16px !important; min-height: auto !important; border-bottom: 1px solid #e2e8f0; background: #fff;">
+                <td style="display: flex; justify-content: space-between; align-items: center; width: 100%; border: none !important; padding: 0 !important; text-align: left !important;">
+                    <div style="text-align: left !important; font-weight: 700; font-size: 16px; color: #0f172a; padding-right: 16px; line-height: 1.5; flex: 1;">
                         ${window.utils.escapeHTML(facility.name)}
                     </div>
-                    <button class="btn btn-primary btn-sm btn-icon" onclick="editFacility('${facility.id}')" title="Düzenle" style="width: 40px; height: 40px; min-width: 40px; flex-shrink: 0; border-radius: 8px;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width: 20px; height: 20px;">
+                    <button class="btn btn-primary btn-sm btn-icon" onclick="editFacility('${facility.id}')" title="Düzenle" style="width: 48px; height: 48px; min-width: 48px; flex-shrink: 0; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 24px; height: 24px;">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                         </svg>
