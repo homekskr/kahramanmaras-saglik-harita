@@ -2326,6 +2326,9 @@ function handlePhotoDelete(slot) {
     }
 }
 
+// Global exposure
+window.handlePhotoDelete = handlePhotoDelete;
+
 /**
  * Upload to Supabase Storage
  */
