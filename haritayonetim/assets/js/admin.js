@@ -835,10 +835,24 @@ function openFacilityModal(facility = null) {
 
             if (preview) {
                 // clear previous content (badges etc)
-                // PRESERVE THE DELETE BUTTON
-                const deleteBtn = preview.querySelector('.photo-delete-btn');
-                preview.innerHTML = ''; // Clear everything
-                if (deleteBtn) preview.appendChild(deleteBtn);
+                // PRESERVE THE DELETE BUTTON if it exists, otherwise create it
+                // We create it fresh every time to ensure event listeners are clean
+                preview.innerHTML = '';
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button'; // Prevent form submission
+                deleteBtn.className = 'photo-delete-btn';
+                deleteBtn.innerHTML = '&times;';
+                deleteBtn.title = 'Fotoğrafı Sil';
+
+                // Use a closure or arrow function to ensure 'i' is correct
+                deleteBtn.onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handlePhotoDelete(i);
+                };
+
+                preview.appendChild(deleteBtn);
 
                 if (displayUrl) {
                     preview.style.backgroundImage = `url(${displayUrl})`;
