@@ -653,11 +653,13 @@ function renderFacilitiesTable() {
         // Simplified view for Facility Manager
         if (isFacilityManager) {
             return `
-            <tr class="facility-card-simple">
-                <td style="display: flex; justify-content: space-between; align-items: center; width: 100%; border-bottom: none !important;">
-                    <strong style="font-size: 15px;">${window.utils.escapeHTML(facility.name)}</strong>
-                    <button class="btn btn-primary btn-sm btn-icon" onclick="editFacility('${facility.id}')" title="Düzenle">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <tr class="facility-card-simple" style="padding: 12px 16px !important; min-height: auto !important;">
+                <td style="display: flex; justify-content: space-between; align-items: center; width: 100%; border: none !important; padding: 0 !important;">
+                    <div style="text-align: left; font-weight: 600; font-size: 14px; color: #1e293b; padding-right: 12px; line-height: 1.4;">
+                        ${window.utils.escapeHTML(facility.name)}
+                    </div>
+                    <button class="btn btn-primary btn-sm btn-icon" onclick="editFacility('${facility.id}')" title="Düzenle" style="width: 40px; height: 40px; min-width: 40px; flex-shrink: 0; border-radius: 8px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width: 20px; height: 20px;">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                         </svg>
