@@ -647,8 +647,35 @@ function renderFacilitiesTable() {
 
     // Check if user has permission to change status
     const canChangeStatus = !userRole || userRole.role !== 'facility_manager';
+    const isFacilityManager = userRole && userRole.role === 'facility_manager';
 
-    tbody.innerHTML = filteredFacilities.map(facility => `
+    tbody.innerHTML = filteredFacilities.map(facility => {
+        // Simplified view for Facility Manager
+        if (isFacilityManager) {
+            return `
+            <tr class="facility-card-simple">
+                <td style="display: flex; justify-content: space-between; align-items: center; width: 100%; border-bottom: none !important;">
+                    <strong style="font-size: 15px;">${window.utils.escapeHTML(facility.name)}</strong>
+                    <button class="btn btn-primary btn-sm btn-icon" onclick="editFacility('${facility.id}')" title="Düzenle">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                    </button>
+                </td>
+                <!-- Hide other columns -->
+                <td style="display:none;"></td>
+                <td style="display:none;"></td>
+                <td style="display:none;"></td>
+                <td style="display:none;"></td>
+                <td style="display:none;"></td>
+                <td style="display:none;"></td>
+            </tr>
+            `;
+        }
+
+        // Standard view for Admin
+        return `
         <tr class="${facility.is_active ? 'status-active' : 'status-passive'}">
             <td><strong>${window.utils.escapeHTML(facility.name)}</strong></td>
             <td>${window.utils.escapeHTML(facility.kurum_kodu) || '-'}</td>
@@ -681,8 +708,8 @@ function renderFacilitiesTable() {
                     </label>` : ''}
                 </div>
             </td>
-        </tr>
-    `).join('');
+        </tr>`;
+    }).join('');
 }
 
 function applyCurrentFilters() {
