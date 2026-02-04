@@ -2256,9 +2256,9 @@ async function handleExcelExport() {
  * Resizes to 1200px (long edge) and converts to WebP/JPEG
  */
 async function compressImage(file) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.readAsDataURL(file);
+        // reader.readAsDataURL(file); // REMOVED: Caused "busy" error because it was called twice
         reader.onload = (event) => {
             const img = new Image();
             img.src = event.target.result;
