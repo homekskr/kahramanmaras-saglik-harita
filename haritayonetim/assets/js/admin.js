@@ -742,6 +742,9 @@ function openFacilityModal(facility = null) {
 
     editingFacilityId = facility ? facility.id : null;
 
+    // Check for facility manager restrictions
+    const isFacilityManager = userRole && userRole.role === 'facility_manager';
+
     if (facility) {
         // Edit mode
         title.textContent = 'Tesisi Düzenle';
@@ -785,10 +788,61 @@ function openFacilityModal(facility = null) {
                 }
             }
         }
+
+        // Apply restrictions for Facility Managers
+        if (isFacilityManager) {
+            // Hide all form rows except those containing photos or basic info we want to show/hide
+            const formRows = document.querySelectorAll('.modal-body .form-row:not(:last-child)'); // Exclude photos row if it's last
+            // Actually, let's target specific elements or groups.
+            // A safer approach: Hide everything first, then show what's allowed.
+            // Or iterate through inputs and disable them? User asked to "only see name and photos".
+
+            // Disable Name
+            document.getElementById('facilityName').disabled = true;
+
+            // Hide other inputs by hiding their parent form-groups or rows
+            // We'll iterate all .form-group elements
+            const groups = document.querySelectorAll('.modal-body .form-group');
+            groups.forEach(group => {
+                const label = group.querySelector('label');
+                if (!label) return;
+
+                const labelText = label.textContent.trim();
+                // Show Name and Photos. Hide others.
+                if (labelText.includes('Tesis Adı') || labelText.includes('Tesis Fotoğrafları')) {
+                    group.style.display = 'block';
+                } else {
+                    group.style.display = 'none';
+                }
+            });
+
+            // Hide location map explicitly if not caught above
+            const mapGroup = document.querySelector('.location-picker').closest('.form-group');
+            if (mapGroup) mapGroup.style.display = 'none';
+
+        } else {
+            // Reset visibility if admin
+            const groups = document.querySelectorAll('.modal-body .form-group');
+            groups.forEach(group => group.style.display = 'block');
+            document.getElementById('facilityName').disabled = false;
+        }
+
     } else {
         // Add mode
+        // If facility manager tried to open add mode (though button is hidden), prevent or reset
+        if (isFacilityManager) {
+            showToast('Yeni tesis ekleme yetkiniz yok.', 'error');
+            return;
+        }
+
         title.textContent = 'Yeni Tesis Ekle';
         form.reset();
+
+        // Reset Admin visibility
+        const groups = document.querySelectorAll('.modal-body .form-group');
+        groups.forEach(group => group.style.display = 'block');
+        document.getElementById('facilityName').disabled = false;
+
         // Clear previews
         document.querySelectorAll('.photo-preview').forEach(p => {
             p.style.backgroundImage = 'none';
