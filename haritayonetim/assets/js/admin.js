@@ -2372,6 +2372,8 @@ async function approvePhoto(facilityId, slot) {
 
         const pendingKey = `pending_image_${slot}`;
         const mainKey = `image_${slot}`;
+		
+		const pendingUrl = currentFacility[pendingKey];
         // Ensure these are global at the end of file (or here)
         window.approvePhoto = approvePhoto;
         window.rejectPhoto = rejectPhoto;
