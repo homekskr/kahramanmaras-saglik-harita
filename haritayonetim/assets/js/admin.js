@@ -20,9 +20,25 @@ let currentStatusFilter = 'all';
 // Tesis ikonunu getir (Özellikle hastaneler için 'Ⓗ' ikonunu zorunlu yap)
 function getFacilityIcon(facility) {
     const typeName = (facility.facility_type_name || facility.type || '').trim().toUpperCase();
+
+    // Hastane Kontrolü
     if (typeName === 'HASTANE' || typeName === 'HASTANE EK BİNA') {
         return '<div class="hospital-sign">H</div>';
     }
+
+    // 112 Acil Sağlık İstasyonu Kontrolü (Hilal İkonlu Ambulans)
+    if (typeName.includes('112') || typeName.includes('ACİL SAĞLIK')) {
+        return `
+            <div class="ambulance-icon-hilal" style="display: inline-block; width: 24px; height: 24px; vertical-align: middle;">
+                <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#e21c21" d="M490.5 284h-14l-31.4-83.6c-4.6-12.1-16.1-20.4-29-20.4H304v-48c0-17.7-14.3-32-32-32H32c-17.7 0-32 14.3-32 32v240c0 17.7 14.3 32 32 32h21c10.4 34.2 42.1 59.1 79.9 59.1s69.5-24.9 79.9-59.1h145.7c10.4 34.2 42.1 59.1 79.9 59.1s69.5-24.9 79.9-59.1h7.1c10.8 0 19.5-8.7 19.5-19.5V303.5c0-10.8-8.7-19.5-19.5-19.5z"/>
+                    <path fill="#fff" d="M304 212h92.5l22.5 60H304v-60zM32 128h240v144H32z"/>
+                    <path fill="#e21c21" d="M130 145c-25 0-45 20-45 45s20 45 45 45c10 0 20-3 28-9-15-2-28-15-28-36s13-34 28-36c-8-6-18-9-28-9z" transform="translate(-10, 0)"/>
+                </svg>
+            </div>
+        `;
+    }
+
     return facility.facility_type_icon || '📍';
 }
 
@@ -2372,8 +2388,8 @@ async function approvePhoto(facilityId, slot) {
 
         const pendingKey = `pending_image_${slot}`;
         const mainKey = `image_${slot}`;
-		
-		const pendingUrl = currentFacility[pendingKey];
+
+        const pendingUrl = currentFacility[pendingKey];
         // Ensure these are global at the end of file (or here)
         window.approvePhoto = approvePhoto;
         window.rejectPhoto = rejectPhoto;

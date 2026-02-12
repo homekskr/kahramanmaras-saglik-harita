@@ -299,11 +299,31 @@ function displayFacilities() {
 }
 
 // Tesis ikonunu getir (Özellikle hastaneler için 'Ⓗ' ikonunu zorunlu yap)
+// Tesis ikonunu getir (Özellikle hastaneler için 'Ⓗ' ikonunu zorunlu yap)
 function getFacilityIcon(facility) {
     const typeName = (facility.facility_type_name || '').trim().toUpperCase();
+
+    // Hastane Kontrolü
     if (typeName === 'HASTANE' || typeName === 'HASTANE EK BİNA') {
         return '<div class="hospital-sign">H</div>';
     }
+
+    // 112 Acil Sağlık İstasyonu Kontrolü (Hilal İkonlu Ambulans)
+    if (typeName.includes('112') || typeName.includes('ACİL SAĞLIK')) {
+        return `
+            <div class="ambulance-icon-hilal">
+                <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#e21c21" d="M490.5 284h-14l-31.4-83.6c-4.6-12.1-16.1-20.4-29-20.4H304v-48c0-17.7-14.3-32-32-32H32c-17.7 0-32 14.3-32 32v240c0 17.7 14.3 32 32 32h21c10.4 34.2 42.1 59.1 79.9 59.1s69.5-24.9 79.9-59.1h145.7c10.4 34.2 42.1 59.1 79.9 59.1s69.5-24.9 79.9-59.1h7.1c10.8 0 19.5-8.7 19.5-19.5V303.5c0-10.8-8.7-19.5-19.5-19.5z"/>
+                    <path fill="#fff" d="M304 212h92.5l22.5 60H304v-60zM32 128h240v144H32z"/>
+                    <path fill="#e21c21" d="M120 180c0-22.1 17.9-40 40-40s40 17.9 40 40c0 10.4-4 19.8-10.5 26.9 8.2 4.1 14.5 11.5 17 20.6-26-4-46.5-24.5-50.5-50.5 9.1 2.5 16.5 8.8 20.6 17 7.1-6.5 16.5-10.5 26.9-10.5 22.1 0 40 17.9 40 40s-17.9 40-40 40-40-17.9-40-40z" transform="scale(0.8) translate(30,-20)"/>
+                    <path fill="#e21c21" d="M110 160c15-15 40-15 55 0s15 40 0 55c-10-10-10-25 0-35s25 0 35 10c15 15 15 40 0 55" transform="translate(20, -10) scale(1.1)"/>
+                    <!-- Simple Crescent Path for better visibility -->
+                    <path fill="#e21c21" d="M130 145c-25 0-45 20-45 45s20 45 45 45c10 0 20-3 28-9-15-2-28-15-28-36s13-34 28-36c-8-6-18-9-28-9z" transform="translate(-10, 0)"/>
+                </svg>
+            </div>
+        `;
+    }
+
     return facility.facility_type_icon || '📍';
 }
 
@@ -358,7 +378,12 @@ function createPopupContent(facility) {
 
                 ${(facility.image_1 || facility.image_2 || facility.image_3) ? `
                 <div class="popup-gallery">
-                    ${[1, 2, 3].map(i => facility[`image_${i}`] ? `<img src="${facility[`image_${i}`]}" class="popup-photo" onclick="openLightbox('${facility[`image_${i}`]}')" title="Büyütmek için tıklayın">` : '').join('')}
+                    ${[1, 2, 3]
+                .filter(i => facility[`image_${i}`])
+                .map((i, index, arr) => {
+                    const allImages = arr.map(idx => `'${facility[`image_${idx}`]}'`).join(',');
+                    return `<img src="${facility[`image_${i}`]}" class="popup-photo" onclick="openLightbox([${allImages}], ${index})" title="Büyütmek için tıklayın">`;
+                }).join('')}
                 </div>` : ''}
 
             </div>
@@ -381,9 +406,16 @@ function createPopupContent(facility) {
 }
 
 // =====================================================
-// LIGHTBOX FONKSİYONLARI
+// LIGHTBOX FONKSİYONLARI (Slider Özelliği ile)
 // =====================================================
-function openLightbox(imageUrl) {
+let currentLightboxImages = [];
+let currentLightboxIndex = 0;
+
+function openLightbox(images, index = 0) {
+    // Tek resim gelirse diziye çevir
+    currentLightboxImages = Array.isArray(images) ? images : [images];
+    currentLightboxIndex = index;
+
     // Varsa eskisini kaldır
     const existing = document.querySelector('.lightbox-overlay');
     if (existing) existing.remove();
@@ -391,34 +423,110 @@ function openLightbox(imageUrl) {
     // Yeni lightbox oluştur
     const lightbox = document.createElement('div');
     lightbox.className = 'lightbox-overlay';
+
+    // Navigasyon butonları (Birden fazla resim varsa)
+    const hasMultiple = currentLightboxImages.length > 1;
+
     lightbox.innerHTML = `
         <div class="lightbox-content">
             <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
-            <img src="${imageUrl}" class="lightbox-image" alt="Tesis Resmi">
+            
+            ${hasMultiple ? `
+                <button class="lightbox-nav lightbox-prev" onclick="event.stopPropagation(); changeLightboxImage(-1)">&#10094;</button>
+                <button class="lightbox-nav lightbox-next" onclick="event.stopPropagation(); changeLightboxImage(1)">&#10095;</button>
+            ` : ''}
+            
+            <div class="lightbox-image-container">
+                <img src="${currentLightboxImages[currentLightboxIndex]}" class="lightbox-image" alt="Tesis Resmi">
+            </div>
+            
+            ${hasMultiple ? `
+                <div class="lightbox-counter">${currentLightboxIndex + 1} / ${currentLightboxImages.length}</div>
+            ` : ''}
         </div>
     `;
 
     // Kapatma olayları
     lightbox.onclick = function (e) {
-        if (e.target.classList.contains('lightbox-overlay')) {
+        if (e.target.classList.contains('lightbox-overlay') || e.target.classList.contains('lightbox-content')) {
             closeLightbox();
         }
     };
 
-    // ESC tuşu ile kapatma
-    document.addEventListener('keydown', function escListener(e) {
+    // Klavye kontrolleri
+    const keyListener = function (e) {
         if (e.key === 'Escape') {
             closeLightbox();
-            document.removeEventListener('keydown', escListener);
+            document.removeEventListener('keydown', keyListener);
+        } else if (e.key === 'ArrowLeft' && hasMultiple) {
+            changeLightboxImage(-1);
+        } else if (e.key === 'ArrowRight' && hasMultiple) {
+            changeLightboxImage(1);
         }
-    });
+    };
+    document.addEventListener('keydown', keyListener);
+
+    // Dokunmatik (Swipe) Kontrolleri
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    lightbox.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    lightbox.addEventListener('touchend', e => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, { passive: true });
+
+    function handleSwipe() {
+        if (!hasMultiple) return;
+        const threshold = 50;
+        if (touchEndX < touchStartX - threshold) {
+            changeLightboxImage(1); // Left swipe -> Next
+        }
+        if (touchEndX > touchStartX + threshold) {
+            changeLightboxImage(-1); // Right swipe -> Prev
+        }
+    }
 
     document.body.appendChild(lightbox);
 
-    // Animasyon için küçük bir gecikme
+    // Animasyon başlat
     setTimeout(() => {
         lightbox.classList.add('active');
     }, 10);
+}
+
+function changeLightboxImage(direction) {
+    if (currentLightboxImages.length <= 1) return;
+
+    currentLightboxIndex += direction;
+
+    // Döngüsel geçiş
+    if (currentLightboxIndex >= currentLightboxImages.length) {
+        currentLightboxIndex = 0;
+    } else if (currentLightboxIndex < 0) {
+        currentLightboxIndex = currentLightboxImages.length - 1;
+    }
+
+    const img = document.querySelector('.lightbox-image');
+    const counter = document.querySelector('.lightbox-counter');
+
+    if (img) {
+        // Yumuşak geçiş animasyonu (fade)
+        img.style.opacity = '0';
+        setTimeout(() => {
+            img.src = currentLightboxImages[currentLightboxIndex];
+            img.onload = () => {
+                img.style.opacity = '1';
+            };
+        }, 150);
+    }
+
+    if (counter) {
+        counter.textContent = `${currentLightboxIndex + 1} / ${currentLightboxImages.length}`;
+    }
 }
 
 function closeLightbox() {
@@ -447,11 +555,16 @@ function renderFacilityDetails(facility) {
             <div class="details-body">
                 ${(facility.image_1 || facility.image_2 || facility.image_3) ? `
                 <div class="details-gallery">
-                    ${[1, 2, 3].map(i => facility[`image_${i}`] ? `
-                        <div class="gallery-item">
-                            <img src="${facility[`image_${i}`]}" alt="${facility.name}" onclick="window.open('${facility[`image_${i}`]}', '_blank')">
-                        </div>
-                    ` : '').join('')}
+                    ${[1, 2, 3]
+                .filter(i => facility[`image_${i}`])
+                .map((i, index, arr) => {
+                    const allImages = arr.map(idx => `'${facility[`image_${idx}`]}'`).join(',');
+                    return `
+                                <div class="gallery-item">
+                                    <img src="${facility[`image_${i}`]}" alt="${facility.name}" onclick="openLightbox([${allImages}], ${index})">
+                                </div>
+                            `;
+                }).join('')}
                 </div>` : ''}
                 <div class="details-info">
                     <strong>📮</strong>
