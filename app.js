@@ -431,18 +431,15 @@ function openLightbox(images, index = 0) {
         <div class="lightbox-content">
             <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
             
-            ${hasMultiple ? `
-                <button class="lightbox-nav lightbox-prev" onclick="event.stopPropagation(); changeLightboxImage(-1)">&#10094;</button>
-                <button class="lightbox-nav lightbox-next" onclick="event.stopPropagation(); changeLightboxImage(1)">&#10095;</button>
-            ` : ''}
-            
             <div class="lightbox-image-container">
                 <img src="${currentLightboxImages[currentLightboxIndex]}" class="lightbox-image" alt="Tesis Resmi">
+                
+                ${hasMultiple ? `
+                    <button class="lightbox-nav lightbox-prev" onclick="event.stopPropagation(); changeLightboxImage(-1)" aria-label="Önceki Fotoğraf"></button>
+                    <button class="lightbox-nav lightbox-next" onclick="event.stopPropagation(); changeLightboxImage(1)" aria-label="Sonraki Fotoğraf"></button>
+                    <div class="lightbox-counter">${currentLightboxIndex + 1} / ${currentLightboxImages.length}</div>
+                ` : ''}
             </div>
-            
-            ${hasMultiple ? `
-                <div class="lightbox-counter">${currentLightboxIndex + 1} / ${currentLightboxImages.length}</div>
-            ` : ''}
         </div>
     `;
 

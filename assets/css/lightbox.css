@@ -99,83 +99,133 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     border-color: var(--primary);
+}
 
-    /* Lightbox Navigation & Slider Enhancements */
+/* =====================================================
+   LIGHTBOX NAVIGATION (STYLISH & GLASSMORPHIC)
+   ===================================================== */
+
+.lightbox-nav {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 25%;
+    /* Large hit area */
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    z-index: 10001;
+    border: none;
+    background: transparent;
+    outline: none;
+    padding: 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lightbox-prev {
+    left: 0;
+    justify-content: flex-start;
+    padding-left: 20px;
+}
+
+.lightbox-next {
+    right: 0;
+    justify-content: flex-end;
+    padding-right: 20px;
+}
+
+/* Glassmorphic Arrow Icons */
+.lightbox-nav::after {
+    content: '';
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 32px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s ease;
+}
+
+.lightbox-prev::after {
+    content: '‹';
+}
+
+.lightbox-next::after {
+    content: '›';
+}
+
+/* Hover Effects */
+.lightbox-nav:hover::after {
+    opacity: 1;
+    transform: scale(1);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.lightbox-nav:active::after {
+    transform: scale(0.95);
+}
+
+/* Counter */
+.lightbox-counter {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    padding: 6px 16px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 10002;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    letter-spacing: 1px;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
     .lightbox-nav {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        background: rgba(0, 0, 0, 0.4);
-        color: white;
-        border: none;
-        font-size: 24px;
-        padding: 16px;
-        cursor: pointer;
-        z-index: 10001;
-        border-radius: 50%;
-        width: 60px;
-        height: 60px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
-        user-select: none;
+        width: 15%;
     }
 
-    .lightbox-nav:hover {
-        background: rgba(0, 0, 0, 0.7);
-        transform: translateY(-50%) scale(1.1);
+    .lightbox-nav::after {
+        opacity: 0.8;
+        /* Always slightly visible on mobile */
+        transform: scale(0.7);
+        width: 44px;
+        height: 44px;
+        font-size: 24px;
     }
 
     .lightbox-prev {
-        left: -80px;
+        padding-left: 10px;
     }
 
     .lightbox-next {
-        right: -80px;
+        padding-right: 10px;
     }
 
-    .lightbox-counter {
-        position: absolute;
-        bottom: -40px;
-        left: 50%;
-        transform: translateX(-50%);
-        color: white;
+    .lightbox-close {
+        top: 20px;
+        right: 20px;
         background: rgba(0, 0, 0, 0.5);
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 14px;
+        backdrop-filter: blur(8px);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10003;
     }
-
-    @media (max-width: 768px) {
-        .lightbox-nav {
-            width: 44px;
-            height: 44px;
-            font-size: 18px;
-            background: rgba(0, 0, 0, 0.3);
-        }
-
-        .lightbox-prev {
-            left: 10px;
-        }
-
-        .lightbox-next {
-            right: 10px;
-        }
-
-        .lightbox-counter {
-            bottom: 20px;
-        }
-
-        .lightbox-close {
-            top: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-    }
+}
