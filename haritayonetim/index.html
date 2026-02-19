@@ -106,6 +106,15 @@
                     </svg>
                     <span>Hata Bildirimleri</span>
                 </a>
+                <a href="#" class="nav-item" data-section="pending_photos">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                        </path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    <span>Fotoğraf Onayları</span>
+                    <span id="pendingPhotoBadge" class="nav-badge" style="display: none;">0</span>
+                </a>
                 <a href="#" class="nav-item" data-section="backup">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -282,6 +291,45 @@
                         </thead>
                         <tbody id="reportsTableBody">
                             <!-- Reports will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Pending Photos Section -->
+            <section id="pendingPhotosSection" class="content-section" style="display: none;">
+                <div class="toolbar">
+                    <div class="header-info">
+                        <h3>Onay Bekleyen Fotoğraflar</h3>
+                        <p>Kullanıcılar tarafından yüklenen ve onayınızı bekleyen tüm görseller</p>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Tesis Adı</th>
+                                <th>İlçe</th>
+                                <th>Bekleyen Görseller</th>
+                                <th>Tarih</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingPhotosTableBody">
+                            <tr class="loading-row">
+                                <td colspan="5">
+                                    <div class="loading-spinner">
+                                        <svg class="spinner" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
+                                                fill="none" opacity="0.25" />
+                                            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="4"
+                                                fill="none" />
+                                        </svg>
+                                        <span>Yükleniyor...</span>
+                                    </div>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>

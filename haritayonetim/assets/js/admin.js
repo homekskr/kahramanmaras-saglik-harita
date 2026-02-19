@@ -606,6 +606,13 @@ function handleNavigation(e) {
         document.getElementById('addFacilityBtn').style.display = 'none';
         document.getElementById('importExcelBtn').style.display = 'none';
         loadReports();
+    } else if (section === 'pending_photos') {
+        document.getElementById('pendingPhotosSection').style.display = 'block';
+        document.getElementById('pageTitle').textContent = 'Fotoğraf Onayları';
+        document.getElementById('pageSubtitle').textContent = 'Kullanıcılar tarafından yüklenen fotoğrafları inceleyin ve onaylayın';
+        document.getElementById('addFacilityBtn').style.display = 'none';
+        document.getElementById('importExcelBtn').style.display = 'none';
+        renderPendingPhotosSection();
     } else if (section === 'backup') {
         document.getElementById('backupSection').style.display = 'block';
         document.getElementById('pageTitle').textContent = 'Sistem Yedeği';
@@ -635,8 +642,18 @@ async function loadFacilities() {
         }
 
         facilities = allFacilities;
+
+        // Calculate pending photo count
+        updatePendingPhotoBadge();
+
         // Apply current filters instead of resetting them
         applyCurrentFilters();
+
+        // Refresh pending photos section if active
+        const pendingSection = document.getElementById('pendingPhotosSection');
+        if (pendingSection && pendingSection.style.display !== 'none') {
+            renderPendingPhotosSection();
+        }
 
     } catch (error) {
         console.error('Error loading facilities:', error);
@@ -693,9 +710,14 @@ function renderFacilitiesTable() {
         }
 
         // Standard view for Admin
+        const hasPending = facility.pending_image_1 || facility.pending_image_2 || facility.pending_image_3;
+
         return `
         <tr class="${facility.is_active ? 'status-active' : 'status-passive'}">
-            <td><strong>${window.utils.escapeHTML(facility.name)}</strong></td>
+            <td>
+                <strong>${window.utils.escapeHTML(facility.name)}</strong>
+                ${hasPending ? `<span class="table-pending-badge" title="Onay bekleyen fotoğraf var">Bekleyen Foto</span>` : ''}
+            </td>
             <td>${window.utils.escapeHTML(facility.kurum_kodu) || '-'}</td>
             <td><span style="display:flex; align-items:center; gap:8px;">${getFacilityIcon(facility)} ${window.utils.escapeHTML(facility.facility_type_name || facility.type) || '-'}</span></td>
             <td>${window.utils.escapeHTML(facility.district_name || facility.district) || '-'}</td>
@@ -774,6 +796,83 @@ function handleSearch(e) {
 function handleFilter(e) {
     applyCurrentFilters();
 }
+
+/**
+ * Update the sidebar badge for pending photos
+ */
+function updatePendingPhotoBadge() {
+    const badge = document.getElementById('pendingPhotoBadge');
+    if (!badge) return;
+
+    const pendingCount = facilities.filter(f =>
+        f.pending_image_1 || f.pending_image_2 || f.pending_image_3
+    ).length;
+
+    if (pendingCount > 0) {
+        badge.textContent = pendingCount;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+/**
+ * Render the specialized section for pending photos
+ */
+function renderPendingPhotosSection() {
+    const tbody = document.getElementById('pendingPhotosTableBody');
+    if (!tbody) return;
+
+    if (!facilities || facilities.length === 0) return;
+
+    const pendingFacilities = facilities.filter(f =>
+        f.pending_image_1 || f.pending_image_2 || f.pending_image_3
+    );
+
+    if (pendingFacilities.length === 0) {
+        tbody.innerHTML = `
+            <tr class="empty-state">
+                <td colspan="5">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <p>Onay bekleyen fotoğraf bulunmuyor.</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = pendingFacilities.map(facility => {
+        const pendingImages = [];
+        if (facility.pending_image_1) pendingImages.push({ url: facility.pending_image_1, slot: 1 });
+        if (facility.pending_image_2) pendingImages.push({ url: facility.pending_image_2, slot: 2 });
+        if (facility.pending_image_3) pendingImages.push({ url: facility.pending_image_3, slot: 3 });
+
+        return `
+            <tr>
+                <td><strong>${window.utils.escapeHTML(facility.name)}</strong></td>
+                <td>${window.utils.escapeHTML(facility.district_name || facility.district) || '-'}</td>
+                <td>
+                    <div class="pending-images-stack">
+                        ${pendingImages.map(img => `
+                            <img src="${img.url}" class="pending-image-preview" onclick="viewPendingPhoto('${img.url}')" title="Büyütmek için tıklayın">
+                        `).join('')}
+                    </div>
+                </td>
+                <td>${new Date(facility.updated_at).toLocaleDateString('tr-TR')}</td>
+                <td>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn btn-primary btn-sm" onclick="editFacility('${facility.id}')">
+                            İncele / Düzenle
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
 
 // =====================================================
 // FACILITY MODAL
