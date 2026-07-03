@@ -47,10 +47,22 @@ function checkURLParameter() {
 
     // Handle Type Filter from URL
     if (typeParam) {
+        const typeAliases = {
+            'shm': 'sağlıklı hayat merkezi',
+            'asm': 'aile sağlığı merkezi',
+            'tsm': 'toplum sağlığı merkezi',
+            'ism': 'ilçe sağlık müdürlüğü',
+            'hastane': 'hastane',
+            '112': '112 acil'
+        };
+
+        const lookupVal = typeParam.toLowerCase().trim();
+        const mappedName = typeAliases[lookupVal] || lookupVal;
+
         const foundType = facilityTypes.find(t =>
             t.id == typeParam ||
-            t.name.toLocaleLowerCase('tr-TR') === typeParam.toLocaleLowerCase('tr-TR') ||
-            (t.name.toLocaleLowerCase('tr-TR').includes(typeParam.toLocaleLowerCase('tr-TR')))
+            t.name.toLocaleLowerCase('tr-TR') === mappedName ||
+            t.name.toLocaleLowerCase('tr-TR').includes(mappedName)
         );
         if (foundType) {
             const typeFilter = document.getElementById('typeFilter');
