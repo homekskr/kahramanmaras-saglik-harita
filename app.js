@@ -36,16 +36,59 @@ document.addEventListener('DOMContentLoaded', async () => {
     checkURLParameter();
 });
 
-// Check URL for facility parameter
+// Check URL for parameters (facility, type, district)
 function checkURLParameter() {
     const urlParams = new URLSearchParams(window.location.search);
     const facilityId = urlParams.get('facility');
+    const typeParam = urlParams.get('type');
+    const districtParam = urlParams.get('district');
 
+    let filterApplied = false;
+
+    // Handle Type Filter from URL
+    if (typeParam) {
+        const foundType = facilityTypes.find(t =>
+            t.id == typeParam ||
+            t.name.toLocaleLowerCase('tr-TR') === typeParam.toLocaleLowerCase('tr-TR') ||
+            (t.name.toLocaleLowerCase('tr-TR').includes(typeParam.toLocaleLowerCase('tr-TR')))
+        );
+        if (foundType) {
+            const typeFilter = document.getElementById('typeFilter');
+            if (typeFilter) {
+                typeFilter.value = foundType.id;
+                filterApplied = true;
+            }
+        }
+    }
+
+    // Handle District Filter from URL
+    if (districtParam) {
+        const foundDistrict = districts.find(d =>
+            d.id == districtParam ||
+            d.name.toLocaleLowerCase('tr-TR') === districtParam.toLocaleLowerCase('tr-TR')
+        );
+        if (foundDistrict) {
+            const districtFilter = document.getElementById('districtFilter');
+            if (districtFilter) {
+                districtFilter.value = foundDistrict.id;
+                filterApplied = true;
+            }
+        }
+    }
+
+    if (filterApplied) {
+        // Trigger the cascade updates and apply filters
+        updateFacilityTypeFilter();
+        populateFacilityNameFilter();
+        applyFilters();
+    }
+
+    // Handle specific facility view
     if (facilityId) {
-        // Wait a bit for data to load
+        // Wait a bit for markers to be rendered by displayFacilities
         setTimeout(() => {
             viewFacility(facilityId);
-        }, 500);
+        }, 800);
     }
 }
 

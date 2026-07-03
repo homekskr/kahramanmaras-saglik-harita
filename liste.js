@@ -36,7 +36,55 @@ function getFacilityIcon(facility) {
 document.addEventListener('DOMContentLoaded', async () => {
     await loadData();
     setupEventListeners();
+    checkURLParameter();
 });
+
+// Check URL for parameters (type, district)
+function checkURLParameter() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const typeParam = urlParams.get('type');
+    const districtParam = urlParams.get('district');
+
+    let filterApplied = false;
+
+    // Handle Type Filter from URL
+    if (typeParam) {
+        const foundType = facilityTypes.find(t =>
+            t.id == typeParam ||
+            t.name.toLocaleLowerCase('tr-TR') === typeParam.toLocaleLowerCase('tr-TR') ||
+            (t.name.toLocaleLowerCase('tr-TR').includes(typeParam.toLocaleLowerCase('tr-TR')))
+        );
+        if (foundType) {
+            const typeFilter = document.getElementById('typeFilter');
+            if (typeFilter) {
+                typeFilter.value = foundType.id;
+                filterApplied = true;
+            }
+        }
+    }
+
+    // Handle District Filter from URL
+    if (districtParam) {
+        const foundDistrict = districts.find(d =>
+            d.id == districtParam ||
+            d.name.toLocaleLowerCase('tr-TR') === districtParam.toLocaleLowerCase('tr-TR')
+        );
+        if (foundDistrict) {
+            const districtFilter = document.getElementById('districtFilter');
+            if (districtFilter) {
+                districtFilter.value = foundDistrict.id;
+                filterApplied = true;
+            }
+        }
+    }
+
+    if (filterApplied) {
+        // Trigger the cascade updates and apply filters
+        updateTypeFilter();
+        updateFacilityFilter();
+        applyFilters();
+    }
+}
 
 // Veri yükleme
 async function loadData() {
