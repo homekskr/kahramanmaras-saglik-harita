@@ -633,6 +633,26 @@
                         küçültülür.</small>
                 </div>
 
+                <!-- ASM Birimleri Bölümü -->
+                <div class="form-group" id="asmUnitsSection" style="display: none;">
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>📋 Aile Hekimliği Birimleri</span>
+                        <small style="color: var(--text-secondary); font-weight: normal;">(Örn: 46.10.01)</small>
+                    </label>
+                    <div style="background: var(--bg-tertiary, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; padding: 12px;">
+                        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                            <input type="text" id="facilityUnitInput" placeholder="Birim Kodu (örn: 46.10.01 veya virgülle ayırarak çoklu)" 
+                                style="flex: 1; padding: 8px 12px; border: 1px solid var(--border-color, #cbd5e1); border-radius: 6px; font-family: monospace;">
+                            <button type="button" class="btn btn-primary" id="addFacilityUnitBtn" style="white-space: nowrap;">
+                                + Birim Ekle
+                            </button>
+                        </div>
+                        <div id="facilityUnitsList" style="display: flex; flex-wrap: wrap; gap: 8px; min-height: 32px; align-items: center;">
+                            <span class="admin-units-empty">Kayıtlı birim bulunamadı.</span>
+                        </div>
+                    </div>
+                </div>
+
                 <input type="hidden" id="facilityId" name="id">
             </form>
 
@@ -648,6 +668,50 @@
                         </svg>
                     </span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ASM Quick Units Management Modal -->
+    <div id="asmUnitsModal" class="modal">
+        <div class="modal-content" style="max-width: 550px;">
+            <div class="modal-header">
+                <div>
+                    <h2 id="asmUnitsModalTitle" style="font-size: 18px; margin: 0;">Aile Hekimliği Birimleri</h2>
+                    <p id="asmUnitsModalSubtitle" style="font-size: 13px; color: var(--text-secondary); margin: 4px 0 0 0;"></p>
+                </div>
+                <button class="modal-close" id="closeAsmUnitsModal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px;">Yeni Birim Ekle</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="quickUnitCodeInput" placeholder="Örn: 46.10.01 (Virgülle çoklu ekleyebilirsiniz)" 
+                            style="flex: 1; padding: 10px 12px; border: 1px solid var(--border-color, #cbd5e1); border-radius: 6px; font-family: monospace; font-size: 14px;">
+                        <button type="button" class="btn btn-primary" id="quickAddUnitBtn">
+                            + Ekle
+                        </button>
+                    </div>
+                    <small style="color: var(--text-secondary); display: block; margin-top: 4px;">Birden fazla birimi virgülle veya boşlukla ayırarak topluca ekleyebilirsiniz.</small>
+                </div>
+
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label style="font-weight: 600; font-size: 13px; margin: 0;">Kayıtlı Birimler</label>
+                        <span id="quickUnitsCount" style="font-size: 12px; color: var(--primary); font-weight: 600;">0 Birim</span>
+                    </div>
+                    <div id="quickUnitsContainer" style="background: var(--bg-tertiary, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; padding: 12px; min-height: 100px; max-height: 250px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start;">
+                        <div class="admin-units-empty">Yükleniyor...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="closeAsmUnitsModalBtn">Tamam</button>
             </div>
         </div>
     </div>

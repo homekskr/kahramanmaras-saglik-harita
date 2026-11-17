@@ -443,8 +443,89 @@ async function checkPermission(facilityTypeId) {
 // =====================================================
 
 // =====================================================
+// FACILITY UNITS (ASM Birimleri)
+// =====================================================
+
+/**
+ * Tesise ait birimleri getir
+ */
+async function getFacilityUnits(facilityId) {
+    try {
+        const { data, error } = await window.supabase
+            .from('facility_units')
+            .select('*')
+            .eq('facility_id', facilityId)
+            .eq('is_active', true)
+            .order('display_order')
+            .order('unit_code');
+
+        if (error) throw error;
+        return { success: true, data };
+    } catch (error) {
+        console.error('Birimler yüklenirken hata:', error);
+        return { success: false, error: error.message, data: [] };
+    }
+}
+
+/**
+ * Yeni birim ekle
+ */
+async function addFacilityUnit(facilityId, unitCode) {
+    try {
+        const { data, error } = await window.supabase
+            .from('facility_units')
+            .insert([{ facility_id: facilityId, unit_code: unitCode.trim() }])
+            .select();
+
+        if (error) throw error;
+        return { success: true, data: data[0] };
+    } catch (error) {
+        console.error('Birim eklenirken hata:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Birim güncelle
+ */
+async function updateFacilityUnit(unitId, unitCode) {
+    try {
+        const { data, error } = await window.supabase
+            .from('facility_units')
+            .update({ unit_code: unitCode.trim() })
+            .eq('id', unitId)
+            .select();
+
+        if (error) throw error;
+        return { success: true, data: data[0] };
+    } catch (error) {
+        console.error('Birim güncellenirken hata:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Birim sil (soft delete)
+ */
+async function deleteFacilityUnit(unitId) {
+    try {
+        const { error } = await window.supabase
+            .from('facility_units')
+            .update({ is_active: false })
+            .eq('id', unitId);
+
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Birim silinirken hata:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// =====================================================
 // UTILITIES
 // =====================================================
+
 
 /**
  * HTML karakterlerini escape eder (XSS koruması)
@@ -467,8 +548,8 @@ window.db = {
     getFacilitiesByDistrict,
     getFacilitiesByType,
     searchFacilities,
-    getFacilities, // Use the new getFacilities function for admin panel
-    createFacility: addFacility, // Alias for admin panel
+    getFacilities,
+    createFacility: addFacility,
     addFacility,
     updateFacility,
     deleteFacility,
@@ -478,7 +559,12 @@ window.db = {
     getReports,
     updateReportStatus,
     getUserRole,
-    checkPermission
+    checkPermission,
+    // Facility Units
+    getFacilityUnits,
+    addFacilityUnit,
+    updateFacilityUnit,
+    deleteFacilityUnit
 };
 
 window.utils = {

@@ -251,7 +251,7 @@ body {
 
 .action-column {
     text-align: center;
-    width: 140px;
+    width: 190px;
 }
 
 .map-btn {
@@ -270,6 +270,21 @@ body {
 .map-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.units-btn {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    display: block;
+    width: 100%;
+    margin-bottom: 4px;
+}
+
+.units-btn:hover {
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.units-btn.active {
+    background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%);
 }
 
 /* Loading */
@@ -467,3 +482,46 @@ body {
     font-size: 20px;
     margin-right: 0;
 }
+
+/* =====================================================
+   ASM Birimleri - Liste Accordion Stilleri
+   ===================================================== */
+.units-row-cell {
+    padding: 0 !important;
+    background: #f0f4ff !important;
+}
+
+.list-units-container {
+    padding: 0.75rem 1.25rem;
+    border-top: 2px solid #c7d2fe;
+}
+
+.list-units-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.list-unit-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.65rem;
+    background: white;
+    border: 1px solid #a5b4fc;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-family: 'Courier New', monospace;
+    color: #3730a3;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    box-shadow: 0 1px 3px rgba(102, 126, 234, 0.15);
+}
+
+.list-units-loading,
+.list-units-empty {
+    font-size: 0.82rem;
+    color: var(--text-light);
+    font-style: italic;
+}
+

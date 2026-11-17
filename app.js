@@ -408,6 +408,7 @@ function addFacilityMarker(facility) {
 function createPopupContent(facility) {
     // Sosyal medya kontrolü
     const hasSocialMedia = facility.facebook || facility.instagram || facility.twitter || facility.nsosyal;
+    const isASM = (facility.facility_type_name || '').toUpperCase() === 'AİLE SAĞLIĞI MERKEZİ';
 
     return `
         <div class="facility-popup">
@@ -441,6 +442,17 @@ function createPopupContent(facility) {
                 }).join('')}
                 </div>` : ''}
 
+                ${isASM ? `
+                <div class="popup-units-section" id="popup-units-${facility.id}">
+                    <div class="popup-units-header" onclick="togglePopupUnits(${facility.id})">
+                        <strong>📋 Birimler</strong>
+                        <span class="popup-units-toggle" id="popup-units-toggle-${facility.id}">▼</span>
+                    </div>
+                    <div class="popup-units-list" id="popup-units-list-${facility.id}" style="display:none;">
+                        <div class="popup-units-loading">Yükleniyor...</div>
+                    </div>
+                </div>` : ''}
+
             </div>
             <div class="popup-actions">
                 <button class="popup-btn" onclick="getDirections(${facility.latitude}, ${facility.longitude}, '${facility.name}')">
@@ -458,6 +470,43 @@ function createPopupContent(facility) {
             </div>
         </div>
     `;
+}
+
+// =====================================================
+// ASM BİRİMLERİ - POPUP FONKSİYONLARI
+// =====================================================
+
+const _loadedUnits = {}; // Cache: facilityId -> units array
+
+async function togglePopupUnits(facilityId) {
+    const list = document.getElementById(`popup-units-list-${facilityId}`);
+    const toggle = document.getElementById(`popup-units-toggle-${facilityId}`);
+    if (!list) return;
+
+    const isHidden = list.style.display === 'none';
+
+    if (isHidden) {
+        list.style.display = 'block';
+        if (toggle) toggle.textContent = '▲';
+
+        // Load from DB only if not cached
+        if (!_loadedUnits[facilityId]) {
+            const result = await window.db.getFacilityUnits(facilityId);
+            _loadedUnits[facilityId] = result.success ? result.data : [];
+        }
+
+        const units = _loadedUnits[facilityId];
+        if (units.length === 0) {
+            list.innerHTML = `<div class="popup-units-empty">Kayıtlı birim yok.</div>`;
+        } else {
+            list.innerHTML = units.map(u =>
+                `<div class="popup-unit-item">📌 ${window.utils.escapeHTML(u.unit_code)}</div>`
+            ).join('');
+        }
+    } else {
+        list.style.display = 'none';
+        if (toggle) toggle.textContent = '▼';
+    }
 }
 
 // =====================================================

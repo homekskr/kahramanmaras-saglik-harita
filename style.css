@@ -1285,3 +1285,67 @@ body {
 .details-gallery .gallery-item {
     width: 100%;
 }
+
+/* =====================================================
+   ASM BİRİMLERİ - Popup Accordion Stilleri
+   ===================================================== */
+.popup-units-section {
+    margin-top: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f8fafc;
+}
+
+.popup-units-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    user-select: none;
+    background: linear-gradient(135deg, #667eea11 0%, #764ba211 100%);
+    transition: background 0.2s;
+    font-size: 0.85rem;
+}
+
+.popup-units-header:hover {
+    background: linear-gradient(135deg, #667eea22 0%, #764ba222 100%);
+}
+
+.popup-units-toggle {
+    font-size: 0.75rem;
+    color: var(--primary);
+    transition: transform 0.2s;
+}
+
+.popup-units-list {
+    padding: 0.5rem 0.75rem;
+    max-height: 180px;
+    overflow-y: auto;
+    border-top: 1px solid #e2e8f0;
+}
+
+.popup-unit-item {
+    padding: 0.3rem 0;
+    font-size: 0.82rem;
+    color: #374151;
+    border-bottom: 1px dashed #e2e8f0;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.03em;
+}
+
+.popup-unit-item:last-child {
+    border-bottom: none;
+}
+
+.popup-units-loading,
+.popup-units-empty {
+    font-size: 0.82rem;
+    color: var(--text-light);
+    padding: 0.25rem 0;
+    font-style: italic;
+}
+
+/* ===================================================== */
+

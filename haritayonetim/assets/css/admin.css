@@ -1369,3 +1369,52 @@ tr.rejected {
     gap: 6px;
     align-items: center;
 }
+
+/* =====================================================
+   ASM Birimleri Yönetim Stilleri
+   ===================================================== */
+.admin-unit-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    color: #3730a3;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.admin-unit-badge:hover {
+    background: #e0e7ff;
+    border-color: #818cf8;
+}
+
+.admin-unit-badge .unit-delete-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s;
+}
+
+.admin-unit-badge .unit-delete-btn:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.admin-units-empty {
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-style: italic;
+    padding: 8px 0;
+}

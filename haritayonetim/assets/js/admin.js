@@ -184,6 +184,41 @@ function setupEventListeners() {
     document.getElementById('closeDeleteModal')?.addEventListener('click', closeDeleteModal);
     document.getElementById('cancelDeleteBtn')?.addEventListener('click', closeDeleteModal);
 
+    // ASM Modal & Section Listeners
+    document.getElementById('facilityType')?.addEventListener('change', (e) => {
+        const selectedTypeId = e.target.value;
+        const typeObj = facilityTypes.find(t => t.id == selectedTypeId);
+        const isASM = typeObj && (typeObj.name || '').toUpperCase().includes('AİLE SAĞLIĞI MERKEZİ');
+        const asmSection = document.getElementById('asmUnitsSection');
+        if (asmSection) {
+            if (editingFacilityId && isASM) {
+                asmSection.style.display = 'block';
+                loadFacilityFormUnits(editingFacilityId);
+            } else {
+                asmSection.style.display = 'none';
+            }
+        }
+    });
+
+    document.getElementById('addFacilityUnitBtn')?.addEventListener('click', handleAddFacilityFormUnit);
+    document.getElementById('facilityUnitInput')?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAddFacilityFormUnit();
+        }
+    });
+
+    document.getElementById('quickAddUnitBtn')?.addEventListener('click', handleAddQuickUnit);
+    document.getElementById('quickUnitCodeInput')?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAddQuickUnit();
+        }
+    });
+
+    document.getElementById('closeAsmUnitsModal')?.addEventListener('click', closeQuickUnitsModal);
+    document.getElementById('closeAsmUnitsModalBtn')?.addEventListener('click', closeQuickUnitsModal);
+
     // Search and filter
     document.getElementById('searchInput')?.addEventListener('input', handleSearch);
     document.getElementById('typeFilter')?.addEventListener('change', handleFilter);
@@ -711,6 +746,7 @@ function renderFacilitiesTable() {
 
         // Standard view for Admin
         const hasPending = facility.pending_image_1 || facility.pending_image_2 || facility.pending_image_3;
+        const isASM = (facility.facility_type_name || facility.type || '').toUpperCase() === 'AİLE SAĞLIĞI MERKEZİ';
 
         return `
         <tr class="${facility.is_active ? 'status-active' : 'status-passive'}">
@@ -735,6 +771,14 @@ function renderFacilitiesTable() {
             </td>
             <td>
                 <div class="table-actions">
+                    ${isASM ? `
+                    <button class="btn btn-ghost btn-icon" onclick="openQuickUnitsModal('${facility.id}')" title="Birimleri Yönet (${window.utils.escapeHTML(facility.name)})" style="color: #4f46e5;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+                            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+                            <rect x="9" y="3" width="6" height="4" rx="1"/>
+                            <path d="M9 14l2 2 4-4"/>
+                        </svg>
+                    </button>` : ''}
                     <button class="btn btn-ghost btn-icon" onclick="editFacility('${facility.id}')" title="Düzenle">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -1072,6 +1116,24 @@ function openFacilityModal(facility = null) {
         // Leave coordinates empty - will be filled by geocoding or map click
         document.getElementById('facilityLat').value = '';
         document.getElementById('facilityLng').value = '';
+    }
+
+    // ASM Birim Yönetimi Bölümü Görünürlüğü
+    const asmSection = document.getElementById('asmUnitsSection');
+    if (asmSection) {
+        if (facility) {
+            const typeObj = facilityTypes.find(t => t.id == (facility.facility_type_id || facility.type));
+            const isASM = (typeObj && (typeObj.name || '').toUpperCase().includes('AİLE SAĞLIĞI MERKEZİ')) ||
+                          ((facility.facility_type_name || facility.type || '').toUpperCase() === 'AİLE SAĞLIĞI MERKEZİ');
+            if (isASM) {
+                asmSection.style.display = 'block';
+                loadFacilityFormUnits(facility.id);
+            } else {
+                asmSection.style.display = 'none';
+            }
+        } else {
+            asmSection.style.display = 'none';
+        }
     }
 
     modal.classList.add('active');
@@ -2631,12 +2693,6 @@ function viewPendingPhoto(url) {
     }
 }
 
-// Global exposure for onclick handlers
-window.approvePhoto = approvePhoto;
-window.rejectPhoto = rejectPhoto;
-window.viewPendingPhoto = viewPendingPhoto;
-window.handlePhotoDelete = handlePhotoDelete;
-window.handlePhotoUpload = handlePhotoUpload;
 async function handlePhotoUpload(slotId) {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
@@ -2707,3 +2763,211 @@ window.rejectPhoto = rejectPhoto;
 window.viewPendingPhoto = viewPendingPhoto;
 window.handlePhotoDelete = handlePhotoDelete;
 window.handlePhotoUpload = handlePhotoUpload;
+
+// =====================================================
+// ASM BİRİM YÖNETİMİ
+// =====================================================
+let currentFormFacilityUnits = [];
+let currentQuickFacilityId = null;
+let currentQuickUnits = [];
+
+// Form içi Birim Yönetimi
+async function loadFacilityFormUnits(facilityId) {
+    const listEl = document.getElementById('facilityUnitsList');
+    if (!listEl) return;
+    listEl.innerHTML = '<span class="admin-units-empty">Birimler yükleniyor...</span>';
+
+    try {
+        const result = await window.db.getFacilityUnits(facilityId);
+        if (!result.success) {
+            listEl.innerHTML = '<span class="admin-units-empty" style="color:var(--danger)">Birimler yüklenemedi.</span>';
+            return;
+        }
+
+        currentFormFacilityUnits = result.data || [];
+        renderFacilityFormUnits();
+    } catch (err) {
+        console.error('loadFacilityFormUnits error:', err);
+        listEl.innerHTML = '<span class="admin-units-empty" style="color:var(--danger)">Hata oluştu.</span>';
+    }
+}
+
+function renderFacilityFormUnits() {
+    const listEl = document.getElementById('facilityUnitsList');
+    if (!listEl) return;
+
+    if (currentFormFacilityUnits.length === 0) {
+        listEl.innerHTML = '<span class="admin-units-empty">Kayıtlı birim bulunamadı.</span>';
+        return;
+    }
+
+    listEl.innerHTML = currentFormFacilityUnits.map(unit => `
+        <div class="admin-unit-badge" data-id="${unit.id}">
+            <span>${window.utils.escapeHTML(unit.unit_code)}</span>
+            <button type="button" class="unit-delete-btn" onclick="handleDeleteFacilityFormUnit(${unit.id})" title="Birimi Sil">&times;</button>
+        </div>
+    `).join('');
+}
+
+async function handleAddFacilityFormUnit() {
+    if (!editingFacilityId) return;
+    const input = document.getElementById('facilityUnitInput');
+    const rawVal = input.value.trim();
+    if (!rawVal) return;
+
+    const codes = rawVal.split(/[,;\n]+/).map(c => c.trim()).filter(Boolean);
+    if (codes.length === 0) return;
+
+    input.disabled = true;
+    let addedCount = 0;
+
+    for (const code of codes) {
+        const res = await window.db.addFacilityUnit(editingFacilityId, code);
+        if (res.success) addedCount++;
+    }
+
+    input.value = '';
+    input.disabled = false;
+    input.focus();
+
+    if (addedCount > 0) {
+        showToast(`${addedCount} birim başarıyla eklendi.`, 'success');
+        await loadFacilityFormUnits(editingFacilityId);
+        if (window._listUnitsCache) delete window._listUnitsCache[editingFacilityId];
+    } else {
+        showToast('Birim eklenirken hata oluştu.', 'error');
+    }
+}
+
+async function handleDeleteFacilityFormUnit(unitId) {
+    if (!confirm('Bu birimi silmek istediğinizden emin misiniz?')) return;
+
+    const res = await window.db.deleteFacilityUnit(unitId);
+    if (res.success) {
+        showToast('Birim silindi.', 'success');
+        currentFormFacilityUnits = currentFormFacilityUnits.filter(u => u.id !== unitId);
+        renderFacilityFormUnits();
+        if (window._listUnitsCache && editingFacilityId) delete window._listUnitsCache[editingFacilityId];
+    } else {
+        showToast('Birim silinirken hata oluştu: ' + (res.error?.message || ''), 'error');
+    }
+}
+
+// Hızlı Modal Birim Yönetimi
+async function openQuickUnitsModal(facilityId) {
+    const facility = facilities.find(f => f.id == facilityId);
+    if (!facility) return;
+
+    currentQuickFacilityId = facilityId;
+    const modal = document.getElementById('asmUnitsModal');
+    const title = document.getElementById('asmUnitsModalTitle');
+    const subtitle = document.getElementById('asmUnitsModalSubtitle');
+    const input = document.getElementById('quickUnitCodeInput');
+
+    if (title) title.textContent = `Birim Yönetimi`;
+    if (subtitle) subtitle.textContent = `${facility.name} (${facility.district_name || facility.district || ''})`;
+    if (input) input.value = '';
+
+    modal.classList.add('active');
+    setTimeout(() => input?.focus(), 100);
+
+    await loadQuickUnits(facilityId);
+}
+
+function closeQuickUnitsModal() {
+    const modal = document.getElementById('asmUnitsModal');
+    if (modal) modal.classList.remove('active');
+    currentQuickFacilityId = null;
+}
+
+async function loadQuickUnits(facilityId) {
+    const container = document.getElementById('quickUnitsContainer');
+    const countBadge = document.getElementById('quickUnitsCount');
+    if (!container) return;
+
+    container.innerHTML = '<div class="admin-units-empty">Birimler yükleniyor...</div>';
+
+    try {
+        const result = await window.db.getFacilityUnits(facilityId);
+        if (!result.success) {
+            container.innerHTML = '<div class="admin-units-empty" style="color:var(--danger)">Birimler yüklenemedi.</div>';
+            return;
+        }
+
+        currentQuickUnits = result.data || [];
+        renderQuickUnits();
+    } catch (err) {
+        console.error('loadQuickUnits error:', err);
+        container.innerHTML = '<div class="admin-units-empty" style="color:var(--danger)">Hata oluştu.</div>';
+    }
+}
+
+function renderQuickUnits() {
+    const container = document.getElementById('quickUnitsContainer');
+    const countBadge = document.getElementById('quickUnitsCount');
+    if (!container) return;
+
+    if (countBadge) countBadge.textContent = `${currentQuickUnits.length} Birim`;
+
+    if (currentQuickUnits.length === 0) {
+        container.innerHTML = '<div class="admin-units-empty">Henüz kayıtlı birim bulunmuyor. Yukarıdan ekleyebilirsiniz.</div>';
+        return;
+    }
+
+    container.innerHTML = currentQuickUnits.map(unit => `
+        <div class="admin-unit-badge" data-id="${unit.id}">
+            <span>${window.utils.escapeHTML(unit.unit_code)}</span>
+            <button type="button" class="unit-delete-btn" onclick="handleDeleteQuickUnit(${unit.id})" title="Birimi Sil">&times;</button>
+        </div>
+    `).join('');
+}
+
+async function handleAddQuickUnit() {
+    if (!currentQuickFacilityId) return;
+    const input = document.getElementById('quickUnitCodeInput');
+    const rawVal = input.value.trim();
+    if (!rawVal) return;
+
+    const codes = rawVal.split(/[,;\s]+/).map(c => c.trim()).filter(Boolean);
+    if (codes.length === 0) return;
+
+    input.disabled = true;
+    let addedCount = 0;
+
+    for (const code of codes) {
+        const res = await window.db.addFacilityUnit(currentQuickFacilityId, code);
+        if (res.success) addedCount++;
+    }
+
+    input.value = '';
+    input.disabled = false;
+    input.focus();
+
+    if (addedCount > 0) {
+        showToast(`${addedCount} birim başarıyla eklendi.`, 'success');
+        await loadQuickUnits(currentQuickFacilityId);
+        if (window._listUnitsCache) delete window._listUnitsCache[currentQuickFacilityId];
+    } else {
+        showToast('Birim eklenirken hata oluştu.', 'error');
+    }
+}
+
+async function handleDeleteQuickUnit(unitId) {
+    if (!confirm('Bu birimi silmek istediğinizden emin misiniz?')) return;
+
+    const res = await window.db.deleteFacilityUnit(unitId);
+    if (res.success) {
+        showToast('Birim silindi.', 'success');
+        currentQuickUnits = currentQuickUnits.filter(u => u.id !== unitId);
+        renderQuickUnits();
+        if (window._listUnitsCache && currentQuickFacilityId) delete window._listUnitsCache[currentQuickFacilityId];
+    } else {
+        showToast('Birim silinirken hata oluştu: ' + (res.error?.message || ''), 'error');
+    }
+}
+
+// Global exposure
+window.openQuickUnitsModal = openQuickUnitsModal;
+window.handleDeleteQuickUnit = handleDeleteQuickUnit;
+window.handleDeleteFacilityFormUnit = handleDeleteFacilityFormUnit;
+

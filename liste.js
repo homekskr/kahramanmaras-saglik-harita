@@ -358,19 +358,35 @@ function renderTable() {
         return;
     }
 
-    tbody.innerHTML = filteredFacilities.map(facility => `
-        <tr>
+    const _listUnitsCache = window._listUnitsCache || (window._listUnitsCache = {});
+
+    tbody.innerHTML = filteredFacilities.map(facility => {
+        const isASM = (facility.facility_type_name || '').toUpperCase() === 'AİLE SAĞLIĞI MERKEZİ';
+        return `
+        <tr id="row-${facility.id}">
             <td>${facility.district_name}</td>
             <td>${facility.facility_type_icon} ${facility.facility_type_name}</td>
             <td><strong>${facility.name}</strong></td>
             <td>${facility.address || 'Adres bilgisi yok'}</td>
             <td class="action-column">
+                ${isASM ? `
+                <button class="map-btn units-btn" onclick="toggleListUnits(${facility.id})" id="units-btn-${facility.id}">
+                    📋 Birimler
+                </button>` : ''}
                 <button class="map-btn" onclick="showOnMap(${facility.id})">
                     🗺️ Haritada Göster
                 </button>
             </td>
         </tr>
-    `).join('');
+        ${isASM ? `<tr id="units-row-${facility.id}" style="display:none;">
+            <td colspan="5" class="units-row-cell">
+                <div class="list-units-container" id="list-units-${facility.id}">
+                    <div class="list-units-loading">Yükleniyor...</div>
+                </div>
+            </td>
+        </tr>` : ''}
+        `;
+    }).join('');
 }
 
 // Sonuç sayısını güncelle
@@ -381,6 +397,42 @@ function updateResultsCount() {
 // Haritada göster
 function showOnMap(facilityId) {
     window.location.href = `/?facility=${facilityId}`;
+}
+
+// ASM Birimlerini liste satırında aç/kapat
+async function toggleListUnits(facilityId) {
+    const row = document.getElementById(`units-row-${facilityId}`);
+    const container = document.getElementById(`list-units-${facilityId}`);
+    const btn = document.getElementById(`units-btn-${facilityId}`);
+    if (!row || !container) return;
+
+    const isHidden = row.style.display === 'none';
+
+    if (isHidden) {
+        row.style.display = 'table-row';
+        if (btn) btn.classList.add('active');
+
+        if (!window._listUnitsCache) window._listUnitsCache = {};
+
+        if (!window._listUnitsCache[facilityId]) {
+            const result = await window.db.getFacilityUnits(facilityId);
+            window._listUnitsCache[facilityId] = result.success ? result.data : [];
+        }
+
+        const units = window._listUnitsCache[facilityId];
+        if (units.length === 0) {
+            container.innerHTML = `<div class="list-units-empty">Kayıtlı birim bulunamadı.</div>`;
+        } else {
+            container.innerHTML = `
+                <div class="list-units-grid">
+                    ${units.map(u => `<span class="list-unit-badge">📌 ${u.unit_code}</span>`).join('')}
+                </div>
+            `;
+        }
+    } else {
+        row.style.display = 'none';
+        if (btn) btn.classList.remove('active');
+    }
 }
 
 // Hata göster
