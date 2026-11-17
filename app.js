@@ -206,6 +206,30 @@ async function loadFacilities() {
 
     if (result.success) {
         allFacilities = result.data;
+
+        // ASM Birimlerini yükle
+        try {
+            const { data: unitsData } = await window.supabase
+                .from('facility_units')
+                .select('*')
+                .eq('is_active', true)
+                .order('display_order', { ascending: true });
+
+            const unitsByFacility = {};
+            if (unitsData) {
+                unitsData.forEach(u => {
+                    if (!unitsByFacility[u.facility_id]) unitsByFacility[u.facility_id] = [];
+                    unitsByFacility[u.facility_id].push(u);
+                });
+            }
+            window._popupUnitsCache = unitsByFacility;
+            allFacilities.forEach(f => {
+                f.units = unitsByFacility[f.id] || [];
+            });
+        } catch (unitErr) {
+            console.warn('Birimler yüklenirken hata:', unitErr);
+        }
+
         filteredFacilities = [...allFacilities];
         displayFacilities();
         updateFacilityCount();
@@ -787,6 +811,30 @@ async function searchFacility() {
     // Hide suggestions when full search is triggered
     hideSuggestions();
 
+    const queryLower = query.toLocaleLowerCase('tr-TR');
+
+    // Hem yerel tesis hem de birim kodu eşleşmesi
+    const localMatches = allFacilities.filter(f => {
+        const matchesName = (f.name || '').toLocaleLowerCase('tr-TR').includes(queryLower);
+        const matchesAddress = (f.address || '').toLocaleLowerCase('tr-TR').includes(queryLower);
+        const matchingUnits = (f.units || []).filter(u => 
+            (u.unit_code || '').toLocaleLowerCase('tr-TR').includes(queryLower)
+        );
+        f._matchingUnits = matchingUnits;
+        return matchesName || matchesAddress || matchingUnits.length > 0;
+    });
+
+    if (localMatches.length > 0) {
+        filteredFacilities = localMatches;
+        displayFacilities();
+        updateFacilityCount();
+        showStatus(`${localMatches.length} tesis bulundu`, 'success');
+        if (localMatches.length === 1) {
+            viewFacility(localMatches[0].id);
+        }
+        return;
+    }
+
     const result = await window.db.searchFacilities(query);
 
     if (result.success && result.data.length > 0) {
@@ -815,11 +863,16 @@ function handleLiveSearch(e) {
         return;
     }
 
-    // Filter local data for live search
-    const matches = allFacilities.filter(f =>
-        f.name.toLocaleLowerCase('tr-TR').includes(query) ||
-        (f.address && f.address.toLocaleLowerCase('tr-TR').includes(query))
-    );
+    // Filter local data for live search (including ASM unit codes)
+    const matches = allFacilities.filter(f => {
+        const matchesName = f.name.toLocaleLowerCase('tr-TR').includes(query);
+        const matchesAddress = (f.address && f.address.toLocaleLowerCase('tr-TR').includes(query));
+        const matchingUnits = (f.units || []).filter(u => 
+            (u.unit_code || '').toLocaleLowerCase('tr-TR').includes(query)
+        );
+        f._matchingUnits = matchingUnits;
+        return matchesName || matchesAddress || matchingUnits.length > 0;
+    });
 
     renderSuggestions(matches);
 
@@ -848,6 +901,11 @@ function renderSuggestions(matches) {
                 <span class="suggestion-icon">${getFacilityIcon(f)}</span>
                 <div class="suggestion-content">
                     <div class="suggestion-name">${window.utils.escapeHTML(f.name)}</div>
+                    ${f._matchingUnits && f._matchingUnits.length > 0 ? `
+                    <div style="font-size: 11px; color: #b45309; font-weight: 600; font-family: monospace;">
+                        🎯 Birim: ${f._matchingUnits.map(u => u.unit_code).join(', ')}
+                    </div>` : ''}
+                    <div class="suggestion-details">${f.district_name || ''}</div>
                 </div>
             </div>
         `).join('');

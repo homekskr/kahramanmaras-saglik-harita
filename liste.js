@@ -129,6 +129,29 @@ async function loadData() {
             facility_type_icon: getFacilityIcon(f)
         }));
 
+        // ASM Birimlerini yükle
+        try {
+            const { data: unitsData, error: unitsError } = await window.supabase
+                .from('facility_units')
+                .select('*')
+                .eq('is_active', true)
+                .order('display_order', { ascending: true });
+
+            const unitsByFacility = {};
+            if (!unitsError && unitsData) {
+                unitsData.forEach(u => {
+                    if (!unitsByFacility[u.facility_id]) unitsByFacility[u.facility_id] = [];
+                    unitsByFacility[u.facility_id].push(u);
+                });
+            }
+            window._listUnitsCache = unitsByFacility;
+            allFacilities.forEach(f => {
+                f.units = unitsByFacility[f.id] || [];
+            });
+        } catch (unitErr) {
+            console.warn('Birimler yüklenirken hata:', unitErr);
+        }
+
         filteredFacilities = [...allFacilities];
 
         // İlçeleri yükle
@@ -304,20 +327,37 @@ function applyFilters() {
     const districtId = document.getElementById('districtFilter').value;
     const typeId = document.getElementById('typeFilter').value;
     const facilityId = document.getElementById('facilityFilter').value;
-    const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+    const searchQuery = document.getElementById('searchInput').value.trim();
+    const queryLower = searchQuery.toLocaleLowerCase('tr-TR');
 
     filteredFacilities = allFacilities.filter(facility => {
         const matchesDistrict = !districtId || facility.district_id == districtId;
         const matchesType = !typeId || facility.facility_type_id == typeId;
         const matchesFacility = !facilityId || facility.id == facilityId;
 
-        const matchesSearch = !searchQuery ||
-            facility.name.toLowerCase().includes(searchQuery) ||
-            facility.district_name.toLowerCase().includes(searchQuery) ||
-            facility.facility_type_name.toLowerCase().includes(searchQuery) ||
-            (facility.address && facility.address.toLowerCase().includes(searchQuery));
+        if (!matchesDistrict || !matchesType || !matchesFacility) {
+            facility._matchingUnits = [];
+            return false;
+        }
 
-        return matchesDistrict && matchesType && matchesFacility && matchesSearch;
+        if (!queryLower) {
+            facility._matchingUnits = [];
+            return true;
+        }
+
+        const matchesName = (facility.name || '').toLocaleLowerCase('tr-TR').includes(queryLower);
+        const matchesDistrictName = (facility.district_name || '').toLocaleLowerCase('tr-TR').includes(queryLower);
+        const matchesTypeName = (facility.facility_type_name || '').toLocaleLowerCase('tr-TR').includes(queryLower);
+        const matchesAddress = (facility.address || '').toLocaleLowerCase('tr-TR').includes(queryLower);
+
+        // ASM Birim Kodu eşleşmesi (örn: 46.01.001 veya 001 veya 46.10)
+        const matchingUnits = (facility.units || []).filter(u => 
+            (u.unit_code || '').toLocaleLowerCase('tr-TR').includes(queryLower)
+        );
+        facility._matchingUnits = matchingUnits;
+        const matchesUnits = matchingUnits.length > 0;
+
+        return matchesName || matchesDistrictName || matchesTypeName || matchesAddress || matchesUnits;
     });
 
     renderTable();
@@ -335,9 +375,31 @@ function clearFilters() {
     updateTypeFilter();
     updateFacilityFilter();
 
+    allFacilities.forEach(f => {
+        f._matchingUnits = [];
+    });
+
     filteredFacilities = [...allFacilities];
     renderTable();
     updateResultsCount();
+}
+
+// Birim rozetlerini oluşturan yardımcı fonksiyon
+function renderUnitsBadgesHtml(units, queryLower = '') {
+    if (!units || units.length === 0) {
+        return `<div class="list-units-empty">Kayıtlı birim bulunamadı.</div>`;
+    }
+    return `
+        <div class="list-units-grid">
+            ${units.map(u => {
+                const code = u.unit_code || '';
+                const isMatch = queryLower && code.toLocaleLowerCase('tr-TR').includes(queryLower);
+                return `<span class="list-unit-badge ${isMatch ? 'match-highlight' : ''}">
+                    ${isMatch ? '🎯' : '📌'} ${code}
+                </span>`;
+            }).join('')}
+        </div>
+    `;
 }
 
 // Tabloyu render et
@@ -359,29 +421,43 @@ function renderTable() {
     }
 
     const _listUnitsCache = window._listUnitsCache || (window._listUnitsCache = {});
+    const searchQuery = document.getElementById('searchInput').value.trim();
+    const queryLower = searchQuery.toLocaleLowerCase('tr-TR');
 
     tbody.innerHTML = filteredFacilities.map(facility => {
         const isASM = (facility.facility_type_name || '').toUpperCase() === 'AİLE SAĞLIĞI MERKEZİ';
+        const matchingUnits = facility._matchingUnits || [];
+        const hasMatchedUnits = matchingUnits.length > 0 && queryLower.length > 0;
+        const autoOpen = hasMatchedUnits;
+
+        const units = facility.units || _listUnitsCache[facility.id] || [];
+
         return `
-        <tr id="row-${facility.id}">
+        <tr id="row-${facility.id}" class="${hasMatchedUnits ? 'row-unit-matched' : ''}">
             <td>${facility.district_name}</td>
             <td>${facility.facility_type_icon} ${facility.facility_type_name}</td>
-            <td><strong>${facility.name}</strong></td>
+            <td>
+                <strong>${facility.name}</strong>
+                ${hasMatchedUnits ? `
+                <div class="matching-unit-badge" title="Aranan birim bu ASM altında bulundu">
+                    🎯 Eşleşen Birim: <strong>${matchingUnits.map(u => u.unit_code).join(', ')}</strong>
+                </div>` : ''}
+            </td>
             <td>${facility.address || 'Adres bilgisi yok'}</td>
             <td class="action-column">
                 ${isASM ? `
-                <button class="map-btn units-btn" onclick="toggleListUnits(${facility.id})" id="units-btn-${facility.id}">
-                    📋 Birimler
+                <button class="map-btn units-btn ${autoOpen ? 'active' : ''}" onclick="toggleListUnits(${facility.id})" id="units-btn-${facility.id}">
+                    📋 Birimler ${units.length > 0 ? `(${units.length})` : ''}
                 </button>` : ''}
                 <button class="map-btn" onclick="showOnMap(${facility.id})">
                     🗺️ Haritada Göster
                 </button>
             </td>
         </tr>
-        ${isASM ? `<tr id="units-row-${facility.id}" style="display:none;">
+        ${isASM ? `<tr id="units-row-${facility.id}" style="${autoOpen ? 'display:table-row;' : 'display:none;'}">
             <td colspan="5" class="units-row-cell">
                 <div class="list-units-container" id="list-units-${facility.id}">
-                    <div class="list-units-loading">Yükleniyor...</div>
+                    ${renderUnitsBadgesHtml(units, queryLower)}
                 </div>
             </td>
         </tr>` : ''}
@@ -420,15 +496,9 @@ async function toggleListUnits(facilityId) {
         }
 
         const units = window._listUnitsCache[facilityId];
-        if (units.length === 0) {
-            container.innerHTML = `<div class="list-units-empty">Kayıtlı birim bulunamadı.</div>`;
-        } else {
-            container.innerHTML = `
-                <div class="list-units-grid">
-                    ${units.map(u => `<span class="list-unit-badge">📌 ${u.unit_code}</span>`).join('')}
-                </div>
-            `;
-        }
+        const searchQuery = document.getElementById('searchInput').value.trim();
+        const queryLower = searchQuery.toLocaleLowerCase('tr-TR');
+        container.innerHTML = renderUnitsBadgesHtml(units, queryLower);
     } else {
         row.style.display = 'none';
         if (btn) btn.classList.remove('active');

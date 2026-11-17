@@ -525,3 +525,38 @@ body {
     font-style: italic;
 }
 
+/* Eşleşen Birim Rozeti ve Vurguları */
+.matching-unit-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 6px;
+    padding: 3px 8px;
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    color: #92400e;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(245, 158, 11, 0.2);
+}
+
+.matching-unit-badge strong {
+    color: #b45309;
+}
+
+.row-unit-matched {
+    background-color: #fffdf5 !important;
+}
+
+.list-unit-badge.match-highlight {
+    background: #fef08a !important;
+    border-color: #eab308 !important;
+    color: #854d0e !important;
+    font-weight: 700 !important;
+    box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.45) !important;
+    transform: scale(1.05);
+}
+
+
