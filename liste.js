@@ -350,10 +350,13 @@ function applyFilters() {
         const matchesTypeName = (facility.facility_type_name || '').toLocaleLowerCase('tr-TR').includes(queryLower);
         const matchesAddress = (facility.address || '').toLocaleLowerCase('tr-TR').includes(queryLower);
 
-        // ASM Birim Kodu eşleşmesi (örn: 46.01.001 veya 001 veya 46.10)
-        const matchingUnits = (facility.units || []).filter(u => 
-            (u.unit_code || '').toLocaleLowerCase('tr-TR').includes(queryLower)
-        );
+        // ASM Birim Kodu ve Adı eşleşmesi (örn: 46.01.001, 001, Afşin 001, vb.)
+        const queryWords = queryLower.split(/\s+/).filter(Boolean);
+        const matchingUnits = (facility.units || []).filter(u => {
+            const codeLower = (u.unit_code || '').toLocaleLowerCase('tr-TR');
+            return codeLower.includes(queryLower) || 
+                   (queryWords.length > 1 && queryWords.every(word => codeLower.includes(word)));
+        });
         facility._matchingUnits = matchingUnits;
         const matchesUnits = matchingUnits.length > 0;
 
@@ -389,13 +392,18 @@ function renderUnitsBadgesHtml(units, queryLower = '') {
     if (!units || units.length === 0) {
         return `<div class="list-units-empty">Kayıtlı birim bulunamadı.</div>`;
     }
+    const queryWords = queryLower ? queryLower.split(/\s+/).filter(Boolean) : [];
     return `
         <div class="list-units-grid">
             ${units.map(u => {
                 const code = u.unit_code || '';
-                const isMatch = queryLower && code.toLocaleLowerCase('tr-TR').includes(queryLower);
+                const codeLower = code.toLocaleLowerCase('tr-TR');
+                const isMatch = queryLower && (
+                    codeLower.includes(queryLower) || 
+                    (queryWords.length > 1 && queryWords.every(word => codeLower.includes(word)))
+                );
                 return `<span class="list-unit-badge ${isMatch ? 'match-highlight' : ''}">
-                    ${isMatch ? '🎯' : '📌'} ${code}
+                    ${isMatch ? '🎯' : '📌'} ${window.utils.escapeHTML(code)}
                 </span>`;
             }).join('')}
         </div>

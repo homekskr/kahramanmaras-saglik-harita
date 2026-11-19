@@ -201,6 +201,8 @@ async function loadInitialData() {
     }
 }
 
+let allUnitsList = [];
+
 async function loadFacilities() {
     const result = await window.db.getAllFacilities();
 
@@ -217,15 +219,21 @@ async function loadFacilities() {
 
             const unitsByFacility = {};
             if (unitsData) {
+                allUnitsList = unitsData;
                 unitsData.forEach(u => {
                     if (!unitsByFacility[u.facility_id]) unitsByFacility[u.facility_id] = [];
                     unitsByFacility[u.facility_id].push(u);
                 });
+            } else {
+                allUnitsList = [];
             }
             window._popupUnitsCache = unitsByFacility;
             allFacilities.forEach(f => {
                 f.units = unitsByFacility[f.id] || [];
             });
+
+            // Birim filtresini doldur
+            populateUnitFilter();
         } catch (unitErr) {
             console.warn('Birimler yüklenirken hata:', unitErr);
         }
@@ -253,6 +261,41 @@ function populateDistrictFilter() {
         option.textContent = district.name;
         select.appendChild(option);
     });
+}
+
+function populateUnitFilter() {
+    const select = document.getElementById('unitFilter');
+    if (!select) return;
+
+    const districtId = document.getElementById('districtFilter')?.value;
+    const facilityId = document.getElementById('facilityNameFilter')?.value;
+    const currentVal = select.value;
+
+    select.innerHTML = '<option value="">Tüm Aile Hekimliği Birimleri</option>';
+
+    // Filtreye uygun birimleri belirle
+    let unitsToShow = [...allUnitsList];
+
+    if (facilityId) {
+        unitsToShow = unitsToShow.filter(u => u.facility_id == facilityId);
+    } else if (districtId) {
+        unitsToShow = unitsToShow.filter(u => {
+            const fac = allFacilities.find(f => f.id == u.facility_id);
+            return fac && fac.district_id == districtId;
+        });
+    }
+
+    unitsToShow.forEach(unit => {
+        const option = document.createElement('option');
+        option.value = unit.id;
+        option.dataset.facilityId = unit.facility_id;
+        option.textContent = unit.unit_code;
+        select.appendChild(option);
+    });
+
+    if (currentVal && unitsToShow.some(u => u.id == currentVal)) {
+        select.value = currentVal;
+    }
 }
 
 function populateFacilityTypeFilter(availableTypeIds = null) {
@@ -337,6 +380,8 @@ function populateFacilityNameFilter() {
         option.disabled = true;
         select.appendChild(option);
     }
+
+    populateUnitFilter();
 }
 
 // =====================================================
@@ -497,19 +542,19 @@ function createPopupContent(facility) {
 }
 
 // =====================================================
-// ASM BİRİMLERİ - POPUP FONKSİYONLARI
+// ASM BİRİMLERİ - POPUP VE DETAY FONKSİYONLARI
 // =====================================================
 
 const _loadedUnits = {}; // Cache: facilityId -> units array
 
-async function togglePopupUnits(facilityId) {
+async function togglePopupUnits(facilityId, highlightQuery = '') {
     const list = document.getElementById(`popup-units-list-${facilityId}`);
     const toggle = document.getElementById(`popup-units-toggle-${facilityId}`);
     if (!list) return;
 
     const isHidden = list.style.display === 'none';
 
-    if (isHidden) {
+    if (isHidden || highlightQuery) {
         list.style.display = 'block';
         if (toggle) toggle.textContent = '▲';
 
@@ -523,14 +568,47 @@ async function togglePopupUnits(facilityId) {
         if (units.length === 0) {
             list.innerHTML = `<div class="popup-units-empty">Kayıtlı birim yok.</div>`;
         } else {
-            list.innerHTML = units.map(u =>
-                `<div class="popup-unit-item">📌 ${window.utils.escapeHTML(u.unit_code)}</div>`
-            ).join('');
+            const hQuery = (highlightQuery || '').toLocaleLowerCase('tr-TR');
+            list.innerHTML = units.map(u => {
+                const code = u.unit_code || '';
+                const isMatch = hQuery && code.toLocaleLowerCase('tr-TR').includes(hQuery);
+                return `
+                    <div class="popup-unit-item ${isMatch ? 'popup-unit-highlight' : ''}">
+                        ${isMatch ? '🎯' : '📌'} ${window.utils.escapeHTML(code)}
+                    </div>
+                `;
+            }).join('');
         }
     } else {
         list.style.display = 'none';
         if (toggle) toggle.textContent = '▼';
     }
+}
+
+/**
+ * Belirli bir ASM birimine ve bağlı olduğu ASM'ye odaklanır
+ */
+async function focusOnUnitFacility(facilityId, targetUnitCode = '') {
+    const facility = allFacilities.find(f => f.id == facilityId);
+    if (!facility) return;
+
+    // Harita filtrelerinde tesisin görünür olduğundan emin ol
+    if (!filteredFacilities.some(f => f.id == facilityId)) {
+        filteredFacilities = [facility];
+        displayFacilities();
+        updateFacilityCount();
+    }
+
+    // Haritada odaklan ve popup aç
+    viewFacility(facilityId);
+
+    // Popup içindeki birimler akordeonunu otomatik aç ve hedef birimi vurgula
+    setTimeout(async () => {
+        await togglePopupUnits(facilityId, targetUnitCode);
+    }, 400);
+
+    // Sol panel detayında da göster ve birimleri listele
+    renderFacilityDetails(facility, targetUnitCode);
 }
 
 // =====================================================
@@ -664,12 +742,30 @@ function closeLightbox() {
     }
 }
 
-function renderFacilityDetails(facility) {
+function renderDetailsUnitsHtml(facility, highlightQuery = '') {
+    const units = facility.units || _loadedUnits[facility.id] || window._popupUnitsCache?.[facility.id] || [];
+    if (units.length === 0) {
+        return `<div class="details-units-empty">Kayıtlı birim bulunamadı.</div>`;
+    }
+    const hQuery = (highlightQuery || '').toLocaleLowerCase('tr-TR');
+    return units.map(u => {
+        const code = u.unit_code || '';
+        const isMatch = hQuery && code.toLocaleLowerCase('tr-TR').includes(hQuery);
+        return `
+            <div class="details-unit-item ${isMatch ? 'match-highlight' : ''}">
+                ${isMatch ? '🎯' : '📌'} ${window.utils.escapeHTML(code)}
+            </div>
+        `;
+    }).join('');
+}
+
+function renderFacilityDetails(facility, highlightQuery = '') {
     const container = document.getElementById('facilityDetails');
     if (!container) return;
 
     // Sosyal medya kontrolü
     const hasSocialMedia = facility.facebook || facility.instagram || facility.twitter || facility.nsosyal;
+    const isASM = (facility.facility_type_name || '').toUpperCase() === 'AİLE SAĞLIĞI MERKEZİ';
 
     container.innerHTML = `
         <div class="details-card">
@@ -718,6 +814,15 @@ function renderFacilityDetails(facility) {
                         ${facility.instagram ? `<a href="${window.utils.escapeHTML(facility.instagram)}" target="_blank" class="social-link" title="Instagram"><svg viewBox="0 0 24 24" width="24" height="24"><defs><linearGradient id="ig-grad-detail" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#FD5949"/><stop offset="50%" style="stop-color:#D6249F"/><stop offset="100%" style="stop-color:#285AEB"/></linearGradient></defs><path fill="url(#ig-grad-detail)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771-4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>` : ''}
                         ${facility.twitter ? `<a href="${window.utils.escapeHTML(facility.twitter)}" target="_blank" class="social-link" title="X (Twitter)"><svg viewBox="0 0 24 24" width="24" height="24"><path fill="#000000" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>` : ''}
                         ${facility.nsosyal ? `<a href="${window.utils.escapeHTML(facility.nsosyal)}" target="_blank" class="social-link" title="NSosyal"><svg viewBox="0 0 24 24" width="24" height="24"><circle cx="12" cy="12" r="11" fill="#00A8E8"/><text x="12" y="16" text-anchor="middle" fill="white" font-size="12" font-weight="bold" font-family="Arial">N</text></svg></a>` : ''}
+                    </div>
+                </div>` : ''}
+                ${isASM ? `
+                <div class="details-units-section">
+                    <div class="details-units-header">
+                        <strong>📋 Aile Hekimliği Birimleri</strong>
+                    </div>
+                    <div class="details-units-list">
+                        ${renderDetailsUnitsHtml(facility, highlightQuery)}
                     </div>
                 </div>` : ''}
                 <button class="report-error-btn" onclick="openReportModal(${facility.id}, '${window.utils.escapeHTML(facility.name).replace(/'/g, "\\'")}')">
@@ -784,9 +889,11 @@ function clearFilters() {
     document.getElementById('districtFilter').value = '';
     document.getElementById('typeFilter').value = '';
     document.getElementById('facilityNameFilter').value = '';
+    const unitSelect = document.getElementById('unitFilter');
+    if (unitSelect) unitSelect.value = '';
     document.getElementById('searchInput').value = '';
 
-    // Repopulate facility name filter
+    // Repopulate facility name filter & units filter
     populateFacilityNameFilter();
 
     filteredFacilities = [...allFacilities];
@@ -813,7 +920,7 @@ async function searchFacility() {
 
     const queryLower = query.toLocaleLowerCase('tr-TR');
 
-    // Hem yerel tesis hem de birim kodu eşleşmesi
+    // Hem yerel tesis hem de birim kodu/adı eşleşmesi
     const localMatches = allFacilities.filter(f => {
         const matchesName = (f.name || '').toLocaleLowerCase('tr-TR').includes(queryLower);
         const matchesAddress = (f.address || '').toLocaleLowerCase('tr-TR').includes(queryLower);
@@ -830,7 +937,9 @@ async function searchFacility() {
         updateFacilityCount();
         showStatus(`${localMatches.length} tesis bulundu`, 'success');
         if (localMatches.length === 1) {
-            viewFacility(localMatches[0].id);
+            const firstFacility = localMatches[0];
+            const targetUnit = firstFacility._matchingUnits?.[0]?.unit_code || '';
+            focusOnUnitFacility(firstFacility.id, targetUnit);
         }
         return;
     }
@@ -921,13 +1030,18 @@ function selectSuggestion(facilityId) {
         document.getElementById('searchInput').value = facility.name;
         hideSuggestions();
 
-        // Single result view
-        filteredFacilities = [facility];
-        displayFacilities();
-        updateFacilityCount();
+        const targetUnit = facility._matchingUnits?.[0]?.unit_code || '';
+        if (targetUnit) {
+            focusOnUnitFacility(facilityId, targetUnit);
+        } else {
+            // Single result view
+            filteredFacilities = [facility];
+            displayFacilities();
+            updateFacilityCount();
 
-        // Focus on map
-        viewFacility(facilityId);
+            // Focus on map
+            viewFacility(facilityId);
+        }
     }
 }
 
@@ -1066,6 +1180,19 @@ function setupEventListeners() {
             viewFacility(facilityId);
         }
     });
+
+    // Focus map when a specific unit is selected from the dropdown
+    const unitSelect = document.getElementById('unitFilter');
+    if (unitSelect) {
+        unitSelect.addEventListener('change', (e) => {
+            const selectedOption = e.target.selectedOptions[0];
+            const facilityId = selectedOption?.dataset?.facilityId;
+            const unitCode = selectedOption?.textContent;
+            if (facilityId) {
+                focusOnUnitFacility(facilityId, unitCode);
+            }
+        });
+    }
 
     // Report form submission
     const reportForm = document.getElementById('reportForm');

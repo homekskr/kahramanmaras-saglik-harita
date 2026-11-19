@@ -446,6 +446,45 @@ async function checkPermission(facilityTypeId) {
 // FACILITY UNITS (ASM Birimleri)
 // =====================================================
 
+// =====================================================
+// ASM İLÇE KODLARI VE BİRİM FORMATLAMA
+// =====================================================
+const DISTRICT_CODE_MAP = {
+    '01': 'AFŞİN',
+    '02': 'ANDIRIN',
+    '03': 'ÇAĞLAYANCERİT',
+    '04': 'EKİNÖZÜ',
+    '05': 'ELBİSTAN',
+    '06': 'GÖKSUN',
+    '07': 'NURHAK',
+    '08': 'PAZARCIK',
+    '09': 'TÜRKOĞLU',
+    '10': 'ONİKİŞUBAT',
+    '11': 'DULKADİROĞLU'
+};
+
+/**
+ * Birim kodunu standart isim formatına dönüştürür
+ * Örn: 46.01.001 -> 46.01.001 AFŞİN 001 NOLU AİLE HEKİMLİĞİ BİRİMİ
+ */
+function formatUnitCodeName(rawCode) {
+    if (!rawCode) return '';
+    const trimmed = String(rawCode).trim();
+    if (trimmed.toUpperCase().includes('AİLE HEKİMLİĞİ BİRİMİ')) {
+        return trimmed;
+    }
+    const parts = trimmed.split('.');
+    if (parts.length >= 3 && parts[0] === '46') {
+        const districtCode = parts[1].padStart(2, '0');
+        const unitNo = parts[2];
+        const districtName = DISTRICT_CODE_MAP[districtCode];
+        if (districtName) {
+            return `${parts[0]}.${districtCode}.${unitNo} ${districtName} ${unitNo} NOLU AİLE HEKİMLİĞİ BİRİMİ`;
+        }
+    }
+    return trimmed;
+}
+
 /**
  * Tesise ait birimleri getir
  */
@@ -472,9 +511,10 @@ async function getFacilityUnits(facilityId) {
  */
 async function addFacilityUnit(facilityId, unitCode) {
     try {
+        const formattedCode = formatUnitCodeName(unitCode);
         const { data, error } = await window.supabase
             .from('facility_units')
-            .insert([{ facility_id: facilityId, unit_code: unitCode.trim() }])
+            .insert([{ facility_id: facilityId, unit_code: formattedCode }])
             .select();
 
         if (error) throw error;
@@ -490,9 +530,10 @@ async function addFacilityUnit(facilityId, unitCode) {
  */
 async function updateFacilityUnit(unitId, unitCode) {
     try {
+        const formattedCode = formatUnitCodeName(unitCode);
         const { data, error } = await window.supabase
             .from('facility_units')
-            .update({ unit_code: unitCode.trim() })
+            .update({ unit_code: formattedCode })
             .eq('id', unitId)
             .select();
 
@@ -568,5 +609,7 @@ window.db = {
 };
 
 window.utils = {
-    escapeHTML
+    escapeHTML,
+    formatUnitCodeName,
+    DISTRICT_CODE_MAP
 };

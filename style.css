@@ -1327,16 +1327,27 @@ body {
 }
 
 .popup-unit-item {
-    padding: 0.3rem 0;
+    padding: 0.35rem 0.25rem;
     font-size: 0.82rem;
     color: #374151;
     border-bottom: 1px dashed #e2e8f0;
     font-family: 'Courier New', monospace;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
+    border-radius: 4px;
+    transition: background-color 0.2s;
 }
 
 .popup-unit-item:last-child {
     border-bottom: none;
+}
+
+.popup-unit-item.popup-unit-highlight {
+    background-color: #fef08a !important;
+    color: #854d0e !important;
+    font-weight: 700 !important;
+    padding: 0.35rem 0.5rem;
+    border-radius: 4px;
+    box-shadow: 0 0 0 1px #eab308;
 }
 
 .popup-units-loading,
@@ -1345,6 +1356,61 @@ body {
     color: var(--text-light);
     padding: 0.25rem 0;
     font-style: italic;
+}
+
+/* =====================================================
+   Sol Panel Detay Kartı - Aile Hekimliği Birimleri
+   ===================================================== */
+.details-units-section {
+    margin-top: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+    overflow: hidden;
+}
+
+.details-units-header {
+    padding: 0.6rem 0.85rem;
+    background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+    font-size: 0.88rem;
+    color: var(--primary);
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.details-units-list {
+    padding: 0.5rem 0.85rem;
+    max-height: 220px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.details-unit-item {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.82rem;
+    font-family: 'Courier New', monospace;
+    color: #374151;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.details-unit-item.match-highlight {
+    background: #fef08a !important;
+    border-color: #eab308 !important;
+    color: #854d0e !important;
+    font-weight: 700 !important;
+    box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.45) !important;
+    transform: scale(1.02);
+}
+
+.details-units-empty {
+    font-size: 0.82rem;
+    color: var(--text-light);
+    font-style: italic;
+    padding: 0.5rem 0;
 }
 
 /* ===================================================== */

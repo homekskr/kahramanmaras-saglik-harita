@@ -678,6 +678,27 @@ async function loadFacilities() {
 
         facilities = allFacilities;
 
+        // ASM Birimlerini yükle
+        try {
+            const { data: unitsData } = await window.supabase
+                .from('facility_units')
+                .select('*')
+                .eq('is_active', true);
+
+            const unitsByFacility = {};
+            if (unitsData) {
+                unitsData.forEach(u => {
+                    if (!unitsByFacility[u.facility_id]) unitsByFacility[u.facility_id] = [];
+                    unitsByFacility[u.facility_id].push(u);
+                });
+            }
+            facilities.forEach(f => {
+                f.units = unitsByFacility[f.id] || [];
+            });
+        } catch (unitErr) {
+            console.warn('Birimler yüklenirken hata:', unitErr);
+        }
+
         // Calculate pending photo count
         updatePendingPhotoBadge();
 
@@ -811,8 +832,9 @@ function applyCurrentFilters() {
         const address = (facility.address || '').toLocaleLowerCase('tr-TR');
         const phone = (facility.phone || '').toLocaleLowerCase('tr-TR');
         const fType = (facility.facility_type_name || facility.type || '').toLocaleLowerCase('tr-TR');
+        const unitCodes = (facility.units || []).map(u => u.unit_code || '').join(' ').toLocaleLowerCase('tr-TR');
 
-        const searchPool = `${name} ${code} ${district} ${address} ${phone} ${fType}`;
+        const searchPool = `${name} ${code} ${district} ${address} ${phone} ${fType} ${unitCodes}`;
         const matchesSearch = query === '' || searchPool.includes(query);
 
         // 2. Check Type Filter
