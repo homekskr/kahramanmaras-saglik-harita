@@ -1,5 +1,5 @@
 // Service Worker for PWA
-const CACHE_NAME = 'saglik-tesisleri-v16';
+const CACHE_NAME = 'saglik-tesisleri-v17';
 const urlsToCache = [
     '/',
     '/index.html',

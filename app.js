@@ -274,25 +274,34 @@ function populateUnitFilter() {
     select.innerHTML = '<option value="">Aile Hekimliği Birimi Seçiniz</option>';
 
     // Filtreye uygun birimleri belirle
-    let unitsToShow = [...allUnitsList];
+    let unitsToShow = [];
 
     if (facilityId) {
-        // Tesis seçilmişse doğrudan o tesisin birimlerini göster
-        unitsToShow = unitsToShow.filter(u => u.facility_id == facilityId);
+        // Tesis seçilmişse: önce allUnitsList'ten, yoksa facility.units'tan al
+        unitsToShow = allUnitsList.filter(u => u.facility_id == facilityId);
+        if (unitsToShow.length === 0) {
+            const facility = allFacilities.find(f => f.id == facilityId);
+            unitsToShow = facility?.units || [];
+        }
     } else {
         // Tesis seçilmemişse, yalnızca ASM türündeki tesislerin birimlerini göster (varsa ilçe filtresine göre)
-        const asmFacilityIds = new Set(
-            allFacilities
-                .filter(f => {
-                    const typeName = (f.facility_type_name || '').toLocaleLowerCase('tr-TR');
-                    const name = (f.name || '').toLocaleLowerCase('tr-TR');
-                    const isASM = typeName.includes('aile sağlığı') || typeName.includes('asm') || name.includes('asm') || name.includes('aile sağlığı');
-                    const matchDistrict = !districtId || f.district_id == districtId;
-                    return isASM && matchDistrict;
-                })
-                .map(f => f.id)
-        );
-        unitsToShow = unitsToShow.filter(u => asmFacilityIds.has(u.facility_id));
+        const asmFacilities = allFacilities.filter(f => {
+            const typeName = (f.facility_type_name || '').toLocaleLowerCase('tr-TR');
+            const name = (f.name || '').toLocaleLowerCase('tr-TR');
+            const isASM = typeName.includes('aile sağlığı') || typeName.includes('asm') || name.includes('asm') || name.includes('aile sağlığı');
+            const matchDistrict = !districtId || f.district_id == districtId;
+            return isASM && matchDistrict;
+        });
+
+        if (allUnitsList.length > 0) {
+            const asmFacilityIds = new Set(asmFacilities.map(f => f.id));
+            unitsToShow = allUnitsList.filter(u => asmFacilityIds.has(u.facility_id));
+        } else {
+            // allUnitsList boşsa facility.units'tan topla
+            asmFacilities.forEach(f => {
+                (f.units || []).forEach(u => unitsToShow.push(u));
+            });
+        }
     }
 
     unitsToShow.forEach(unit => {

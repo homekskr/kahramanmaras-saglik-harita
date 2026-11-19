@@ -415,7 +415,12 @@ function applyFilters() {
         }
 
         if (!queryLower) {
-            facility._matchingUnits = [];
+            if (selectedUnitId) {
+                const selectedUnit = (facility.units || []).find(u => u.id == selectedUnitId);
+                facility._matchingUnits = selectedUnit ? [selectedUnit] : [];
+            } else {
+                facility._matchingUnits = [];
+            }
             return true;
         }
 
@@ -509,13 +514,15 @@ function renderTable() {
     }
 
     const _listUnitsCache = window._listUnitsCache || (window._listUnitsCache = {});
-    const searchQuery = document.getElementById('searchInput').value.trim();
+    const searchQuery = document.getElementById('searchInput')?.value.trim() || '';
     const queryLower = searchQuery.toLocaleLowerCase('tr-TR');
+    const selectedUnitId = document.getElementById('unitFilter')?.value || '';
 
     tbody.innerHTML = filteredFacilities.map(facility => {
-        const isASM = (facility.facility_type_name || '').toUpperCase() === 'AİLE SAĞLIĞI MERKEZİ';
+        const typeName = (facility.facility_type_name || '').toLocaleLowerCase('tr-TR');
+        const isASM = typeName.includes('aile sağlığı') || typeName.includes('asm');
         const matchingUnits = facility._matchingUnits || [];
-        const hasMatchedUnits = matchingUnits.length > 0 && queryLower.length > 0;
+        const hasMatchedUnits = matchingUnits.length > 0 && (queryLower.length > 0 || Boolean(selectedUnitId));
         const autoOpen = hasMatchedUnits;
 
         const units = facility.units || _listUnitsCache[facility.id] || [];
@@ -528,7 +535,7 @@ function renderTable() {
                 <strong>${facility.name}</strong>
                 ${hasMatchedUnits ? `
                 <div class="matching-unit-badge" title="Aranan birim bu ASM altında bulundu">
-                    🎯 Eşleşen Birim: <strong>${matchingUnits.map(u => u.unit_code).join(', ')}</strong>
+                    🎯 Eşleşen Birim: <strong>${matchingUnits.map(u => window.utils?.cleanUnitDisplay ? window.utils.cleanUnitDisplay(u.unit_code) : u.unit_code).join(', ')}</strong>
                 </div>` : ''}
             </td>
             <td>${facility.address || 'Adres bilgisi yok'}</td>
@@ -545,7 +552,7 @@ function renderTable() {
         ${isASM ? `<tr id="units-row-${facility.id}" style="${autoOpen ? 'display:table-row;' : 'display:none;'}">
             <td colspan="5" class="units-row-cell">
                 <div class="list-units-container" id="list-units-${facility.id}">
-                    ${renderUnitsBadgesHtml(units, queryLower)}
+                    ${renderUnitsBadgesHtml(hasMatchedUnits ? matchingUnits : units, queryLower)}
                 </div>
             </td>
         </tr>` : ''}
@@ -586,7 +593,17 @@ async function toggleListUnits(facilityId) {
         const units = window._listUnitsCache[facilityId];
         const searchQuery = document.getElementById('searchInput').value.trim();
         const queryLower = searchQuery.toLocaleLowerCase('tr-TR');
-        container.innerHTML = renderUnitsBadgesHtml(units, queryLower);
+        
+        // Arama varsa sadece eşleşen birimleri göster
+        let unitsToRender = units;
+        if (queryLower) {
+            const facility = allFacilities.find(f => f.id == facilityId);
+            const matchingUnits = facility?._matchingUnits || [];
+            if (matchingUnits.length > 0) {
+                unitsToRender = matchingUnits;
+            }
+        }
+        container.innerHTML = renderUnitsBadgesHtml(unitsToRender, queryLower);
     } else {
         row.style.display = 'none';
         if (btn) btn.classList.remove('active');
