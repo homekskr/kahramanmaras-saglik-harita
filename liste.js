@@ -232,23 +232,23 @@ function populateUnitFilterList(facilityId = '', districtId = '') {
     unitFilter.innerHTML = '<option value="">Tüm Birimler</option>';
 
     if (facilityId) {
-        // Belirli bir ASM'nin birimleri
+        // Belirli bir tesisin birimleri
         const facility = allFacilities.find(f => f.id == facilityId);
-        const isASM = facility && (facility.facility_type_name || '').toUpperCase() === 'AİLE SAĞLIĞI MERKEZİ';
-        if (isASM) {
-            const units = allUnitsCache[facilityId] || facility.units || [];
-            units.forEach(unit => {
-                const option = document.createElement('option');
-                option.value = unit.id;
-                option.dataset.facilityId = facilityId;
-                option.textContent = unit.unit_code;
-                unitFilter.appendChild(option);
-            });
-        }
+        const units = allUnitsCache[facilityId] || facility?.units || [];
+        units.forEach(unit => {
+            const option = document.createElement('option');
+            option.value = unit.id;
+            option.dataset.facilityId = facilityId;
+            const cleanName = window.utils?.cleanUnitDisplay ? window.utils.cleanUnitDisplay(unit.unit_code) : unit.unit_code.replace(/^46\.\d{1,2}\.\d{1,3}\s*/i, '');
+            option.textContent = cleanName;
+            unitFilter.appendChild(option);
+        });
     } else {
         // Tüm ASM'lerin birimleri (districtId varsa o ilçedekiler)
         const asmFacilities = allFacilities.filter(f => {
-            const isASM = (f.facility_type_name || '').toUpperCase() === 'AİLE SAĞLIĞI MERKEZİ';
+            const typeName = (f.facility_type_name || '').toLocaleLowerCase('tr-TR');
+            const name = (f.name || '').toLocaleLowerCase('tr-TR');
+            const isASM = typeName.includes('aile sağlığı') || typeName.includes('asm') || name.includes('asm') || name.includes('aile sağlığı');
             const matchDistrict = !districtId || f.district_id == districtId;
             return isASM && matchDistrict;
         });
@@ -259,7 +259,8 @@ function populateUnitFilterList(facilityId = '', districtId = '') {
                 const option = document.createElement('option');
                 option.value = unit.id;
                 option.dataset.facilityId = fac.id;
-                option.textContent = `${unit.unit_code} (${fac.name})`;
+                const cleanName = window.utils?.cleanUnitDisplay ? window.utils.cleanUnitDisplay(unit.unit_code) : unit.unit_code.replace(/^46\.\d{1,2}\.\d{1,3}\s*/i, '');
+                option.textContent = `${cleanName} (${fac.name})`;
                 unitFilter.appendChild(option);
             });
         });
@@ -473,13 +474,16 @@ function renderUnitsBadgesHtml(units, queryLower = '') {
         <div class="list-units-grid">
             ${units.map(u => {
                 const code = u.unit_code || '';
+                const cleanCode = window.utils?.cleanUnitDisplay ? window.utils.cleanUnitDisplay(code) : code.replace(/^46\.\d{1,2}\.\d{1,3}\s*/i, '');
                 const codeLower = code.toLocaleLowerCase('tr-TR');
+                const cleanLower = cleanCode.toLocaleLowerCase('tr-TR');
                 const isMatch = queryLower && (
                     codeLower.includes(queryLower) || 
-                    (queryWords.length > 1 && queryWords.every(word => codeLower.includes(word)))
+                    cleanLower.includes(queryLower) ||
+                    (queryWords.length > 1 && queryWords.every(word => codeLower.includes(word) || cleanLower.includes(word)))
                 );
                 return `<span class="list-unit-badge ${isMatch ? 'match-highlight' : ''}">
-                    ${isMatch ? '🎯' : '📌'} ${window.utils.escapeHTML(code)}
+                    ${isMatch ? '🎯' : '📌'} ${window.utils.escapeHTML(cleanCode)}
                 </span>`;
             }).join('')}
         </div>

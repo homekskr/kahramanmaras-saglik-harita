@@ -269,30 +269,27 @@ function populateUnitFilter() {
 
     const districtId = document.getElementById('districtFilter')?.value;
     const facilityId = document.getElementById('facilityNameFilter')?.value;
-    const typeId = document.getElementById('typeFilter')?.value;
     const currentVal = select.value;
 
     select.innerHTML = '<option value="">Aile Hekimliği Birimi Seçiniz</option>';
 
-    // Filtreye uygun birimleri belirle (sadece ASM türündeki tesislere ait birimler)
+    // Filtreye uygun birimleri belirle
     let unitsToShow = [...allUnitsList];
 
     if (facilityId) {
-        // Belirli bir ASM seçilmişse: o ASM'nin birimleri
-        const selectedFacility = allFacilities.find(f => f.id == facilityId);
-        const isASM = selectedFacility && (selectedFacility.facility_type_name || '').toUpperCase() === 'AİLE SAĞLIĞI MERKEZİ';
-        if (isASM) {
-            unitsToShow = unitsToShow.filter(u => u.facility_id == facilityId);
-        } else {
-            // ASM değilse birim listesini boş göster
-            unitsToShow = [];
-        }
+        // Tesis seçilmişse doğrudan o tesisin birimlerini göster
+        unitsToShow = unitsToShow.filter(u => u.facility_id == facilityId);
     } else {
-        // Yalnızca ASM türündeki tesislere ait birimleri filtrele
+        // Tesis seçilmemişse, yalnızca ASM türündeki tesislerin birimlerini göster (varsa ilçe filtresine göre)
         const asmFacilityIds = new Set(
             allFacilities
-                .filter(f => (f.facility_type_name || '').toUpperCase() === 'AİLE SAĞLIĞI MERKEZİ')
-                .filter(f => !districtId || f.district_id == districtId)
+                .filter(f => {
+                    const typeName = (f.facility_type_name || '').toLocaleLowerCase('tr-TR');
+                    const name = (f.name || '').toLocaleLowerCase('tr-TR');
+                    const isASM = typeName.includes('aile sağlığı') || typeName.includes('asm') || name.includes('asm') || name.includes('aile sağlığı');
+                    const matchDistrict = !districtId || f.district_id == districtId;
+                    return isASM && matchDistrict;
+                })
                 .map(f => f.id)
         );
         unitsToShow = unitsToShow.filter(u => asmFacilityIds.has(u.facility_id));
@@ -302,10 +299,11 @@ function populateUnitFilter() {
         const option = document.createElement('option');
         option.value = unit.id;
         option.dataset.facilityId = unit.facility_id;
-        // ASM adını da parantez içinde göster
+        const cleanName = window.utils?.cleanUnitDisplay ? window.utils.cleanUnitDisplay(unit.unit_code) : unit.unit_code.replace(/^46\.\d{1,2}\.\d{1,3}\s*/i, '');
+        // ASM seçili değilse yanına hangi ASM olduğunu ekle
         const parentFac = allFacilities.find(f => f.id == unit.facility_id);
         const parentName = parentFac ? ` (${parentFac.name})` : '';
-        option.textContent = unit.unit_code + (facilityId ? '' : parentName);
+        option.textContent = cleanName + (facilityId ? '' : parentName);
         select.appendChild(option);
     });
 
@@ -588,10 +586,11 @@ async function togglePopupUnits(facilityId, highlightQuery = '') {
             const hQuery = (highlightQuery || '').toLocaleLowerCase('tr-TR');
             list.innerHTML = units.map(u => {
                 const code = u.unit_code || '';
-                const isMatch = hQuery && code.toLocaleLowerCase('tr-TR').includes(hQuery);
+                const cleanCode = window.utils?.cleanUnitDisplay ? window.utils.cleanUnitDisplay(code) : code.replace(/^46\.\d{1,2}\.\d{1,3}\s*/i, '');
+                const isMatch = hQuery && (code.toLocaleLowerCase('tr-TR').includes(hQuery) || cleanCode.toLocaleLowerCase('tr-TR').includes(hQuery));
                 return `
                     <div class="popup-unit-item ${isMatch ? 'popup-unit-highlight' : ''}">
-                        ${isMatch ? '🎯' : '📌'} ${window.utils.escapeHTML(code)}
+                        ${isMatch ? '🎯' : '📌'} ${window.utils.escapeHTML(cleanCode)}
                     </div>
                 `;
             }).join('');
@@ -767,10 +766,11 @@ function renderDetailsUnitsHtml(facility, highlightQuery = '') {
     const hQuery = (highlightQuery || '').toLocaleLowerCase('tr-TR');
     return units.map(u => {
         const code = u.unit_code || '';
-        const isMatch = hQuery && code.toLocaleLowerCase('tr-TR').includes(hQuery);
+        const cleanCode = window.utils?.cleanUnitDisplay ? window.utils.cleanUnitDisplay(code) : code.replace(/^46\.\d{1,2}\.\d{1,3}\s*/i, '');
+        const isMatch = hQuery && (code.toLocaleLowerCase('tr-TR').includes(hQuery) || cleanCode.toLocaleLowerCase('tr-TR').includes(hQuery));
         return `
             <div class="details-unit-item ${isMatch ? 'match-highlight' : ''}">
-                ${isMatch ? '🎯' : '📌'} ${window.utils.escapeHTML(code)}
+                ${isMatch ? '🎯' : '📌'} ${window.utils.escapeHTML(cleanCode)}
             </div>
         `;
     }).join('');

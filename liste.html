@@ -35,7 +35,10 @@
         <div class="header-content">
             <div class="header-left">
                 <img src="assets/images/logo.png" alt="Logo" class="header-logo">
-                <h1 class="header-title">Kahramanmaraş Kamu Sağlık Tesisleri</h1>
+                <h1 class="header-title">
+                    Kahramanmaraş Kamu Sağlık Tesisleri
+                    <span id="resultsCountHeader" class="header-count">(<span id="resultsCount">0</span> tesis bulundu)</span>
+                </h1>
             </div>
             <div class="header-right">
                 <a href="/" class="header-btn">
@@ -92,9 +95,6 @@
                 <button id="clearFiltersBtn" class="btn btn-secondary">
                     🔄 Temizle
                 </button>
-                <div class="results-count">
-                    <span id="resultsCount">0</span> tesis bulundu
-                </div>
             </div>
         </section>
 
@@ -128,8 +128,8 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="assets/js/config.js"></script>
-    <script src="liste.js"></script>
+    <script src="assets/js/config.js?v=2.3"></script>
+    <script src="liste.js?v=2.3"></script>
 </body>
 
 </html>

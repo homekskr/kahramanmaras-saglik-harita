@@ -464,25 +464,35 @@ const DISTRICT_CODE_MAP = {
 };
 
 /**
- * Birim kodunu standart isim formatına dönüştürür
- * Örn: 46.01.001 -> 46.01.001 AFŞİN 001 NOLU AİLE HEKİMLİĞİ BİRİMİ
+ * Birim kodunu standart isim formatına dönüştürür (başında 46.XX.YYY olmadan)
+ * Örn: 46.01.001 -> AFŞİN 001 NOLU AİLE HEKİMLİĞİ BİRİMİ
  */
 function formatUnitCodeName(rawCode) {
     if (!rawCode) return '';
-    const trimmed = String(rawCode).trim();
+    let trimmed = String(rawCode).trim();
+    // Başındaki 46.xx.yyy kısmını temizle
+    trimmed = trimmed.replace(/^46\.\d{1,2}\.\d{1,3}\s*/i, '');
     if (trimmed.toUpperCase().includes('AİLE HEKİMLİĞİ BİRİMİ')) {
         return trimmed;
     }
-    const parts = trimmed.split('.');
+    const parts = String(rawCode).trim().split('.');
     if (parts.length >= 3 && parts[0] === '46') {
         const districtCode = parts[1].padStart(2, '0');
         const unitNo = parts[2];
         const districtName = DISTRICT_CODE_MAP[districtCode];
         if (districtName) {
-            return `${parts[0]}.${districtCode}.${unitNo} ${districtName} ${unitNo} NOLU AİLE HEKİMLİĞİ BİRİMİ`;
+            return `${districtName} ${unitNo} NOLU AİLE HEKİMLİĞİ BİRİMİ`;
         }
     }
     return trimmed;
+}
+
+/**
+ * Görüntüleme için birim adından başındaki 46.xx.yyy kodunu temizler
+ */
+function cleanUnitDisplay(code) {
+    if (!code) return '';
+    return String(code).replace(/^46\.\d{1,2}\.\d{1,3}\s*/i, '').trim();
 }
 
 /**
@@ -611,5 +621,6 @@ window.db = {
 window.utils = {
     escapeHTML,
     formatUnitCodeName,
+    cleanUnitDisplay,
     DISTRICT_CODE_MAP
 };

@@ -1,4 +1,4 @@
-/* Liste Sayfası Stilleri */
+﻿/* Liste Sayfası Stilleri */
 
 :root {
     --primary: #667eea;
@@ -148,10 +148,11 @@ body {
 }
 
 .filter-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex-wrap: wrap;
+display: flex;
+align-items: center;
+justify-content: flex-end;
+gap: 0.75rem;
+flex-wrap: wrap;
 }
 
 .btn {
@@ -497,9 +498,9 @@ body {
 }
 
 .list-units-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+display: flex;
+flex-direction: column;
+gap: 0.35rem;
 }
 
 .list-unit-badge {
