@@ -50,6 +50,12 @@
         <!-- Filters Section -->
         <section class="filters-section">
             <div class="filters-grid">
+                <div class="filter-group search-group">
+                    <label for="searchInput">🔍 Akıllı Arama</label>
+                    <input type="text" id="searchInput" class="search-input"
+                        placeholder="Tesis, ilçe veya Aile Hekimliği Birimi ara (örn: 46.01.001, Afşin 001)...">
+                </div>
+
                 <div class="filter-group">
                     <label for="districtFilter">İlçe</label>
                     <select id="districtFilter" class="filter-select">
@@ -71,10 +77,11 @@
                     </select>
                 </div>
 
-                <div class="filter-group search-group">
-                    <label for="searchInput">Akıllı Arama</label>
-                    <input type="text" id="searchInput" class="search-input"
-                        placeholder="Tesis, ilçe veya Aile Hekimliği Birimi ara (örn: 46.01.001, Afşin 001)...">
+                <div class="filter-group">
+                    <label for="unitFilter">Aile Hekimliği Birimi</label>
+                    <select id="unitFilter" class="filter-select">
+                        <option value="">Tüm Birimler</option>
+                    </select>
                 </div>
             </div>
 

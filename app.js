@@ -269,30 +269,47 @@ function populateUnitFilter() {
 
     const districtId = document.getElementById('districtFilter')?.value;
     const facilityId = document.getElementById('facilityNameFilter')?.value;
+    const typeId = document.getElementById('typeFilter')?.value;
     const currentVal = select.value;
 
-    select.innerHTML = '<option value="">Tüm Aile Hekimliği Birimleri</option>';
+    select.innerHTML = '<option value="">Aile Hekimliği Birimi Seçiniz</option>';
 
-    // Filtreye uygun birimleri belirle
+    // Filtreye uygun birimleri belirle (sadece ASM türündeki tesislere ait birimler)
     let unitsToShow = [...allUnitsList];
 
     if (facilityId) {
-        unitsToShow = unitsToShow.filter(u => u.facility_id == facilityId);
-    } else if (districtId) {
-        unitsToShow = unitsToShow.filter(u => {
-            const fac = allFacilities.find(f => f.id == u.facility_id);
-            return fac && fac.district_id == districtId;
-        });
+        // Belirli bir ASM seçilmişse: o ASM'nin birimleri
+        const selectedFacility = allFacilities.find(f => f.id == facilityId);
+        const isASM = selectedFacility && (selectedFacility.facility_type_name || '').toUpperCase() === 'AİLE SAĞLIĞI MERKEZİ';
+        if (isASM) {
+            unitsToShow = unitsToShow.filter(u => u.facility_id == facilityId);
+        } else {
+            // ASM değilse birim listesini boş göster
+            unitsToShow = [];
+        }
+    } else {
+        // Yalnızca ASM türündeki tesislere ait birimleri filtrele
+        const asmFacilityIds = new Set(
+            allFacilities
+                .filter(f => (f.facility_type_name || '').toUpperCase() === 'AİLE SAĞLIĞI MERKEZİ')
+                .filter(f => !districtId || f.district_id == districtId)
+                .map(f => f.id)
+        );
+        unitsToShow = unitsToShow.filter(u => asmFacilityIds.has(u.facility_id));
     }
 
     unitsToShow.forEach(unit => {
         const option = document.createElement('option');
         option.value = unit.id;
         option.dataset.facilityId = unit.facility_id;
-        option.textContent = unit.unit_code;
+        // ASM adını da parantez içinde göster
+        const parentFac = allFacilities.find(f => f.id == unit.facility_id);
+        const parentName = parentFac ? ` (${parentFac.name})` : '';
+        option.textContent = unit.unit_code + (facilityId ? '' : parentName);
         select.appendChild(option);
     });
 
+    // Önceki seçim hâlâ geçerliyse koru
     if (currentVal && unitsToShow.some(u => u.id == currentVal)) {
         select.value = currentVal;
     }
@@ -867,20 +884,36 @@ function applyFilters() {
     const districtId = document.getElementById('districtFilter').value;
     const typeId = document.getElementById('typeFilter').value;
     const facilityId = document.getElementById('facilityNameFilter').value;
+    const unitSelect = document.getElementById('unitFilter');
+    const selectedUnitId = unitSelect ? unitSelect.value : '';
 
     filteredFacilities = allFacilities.filter(facility => {
         const matchesDistrict = !districtId || facility.district_id == districtId;
         const matchesType = !typeId || facility.facility_type_id == typeId;
         const matchesFacility = !facilityId || facility.id == facilityId;
-        return matchesDistrict && matchesType && matchesFacility;
+
+        // Birim seçilmişse: o birimin ait olduğu ASM'yi bul ve göster
+        let matchesUnit = true;
+        if (selectedUnitId) {
+            const unit = allUnitsList.find(u => u.id == selectedUnitId);
+            matchesUnit = unit && facility.id == unit.facility_id;
+        }
+
+        return matchesDistrict && matchesType && matchesFacility && matchesUnit;
     });
 
     displayFacilities();
     updateFacilityCount();
     showStatus(`${filteredFacilities.length} tesis gösteriliyor`, 'info');
 
-    // Eğer belirli bir tesis seçildiyse, popup'ı aç
-    if (facilityId) {
+    // Birim seçildiyse bağlı ASM'ye odaklan
+    if (selectedUnitId) {
+        const unit = allUnitsList.find(u => u.id == selectedUnitId);
+        if (unit) {
+            focusOnUnitFacility(unit.facility_id, unit.unit_code);
+        }
+    } else if (facilityId) {
+        // Eğer belirli bir tesis seçildiyse, popup'ı aç
         viewFacility(facilityId);
     }
 }
@@ -895,6 +928,7 @@ function clearFilters() {
 
     // Repopulate facility name filter & units filter
     populateFacilityNameFilter();
+    populateUnitFilter();
 
     filteredFacilities = [...allFacilities];
     displayFacilities();
@@ -1167,15 +1201,19 @@ function setupEventListeners() {
     document.getElementById('districtFilter').addEventListener('change', () => {
         updateFacilityTypeFilter(); // Filter types based on district
         populateFacilityNameFilter();
+        populateUnitFilter(); // İlçeye göre birimleri de güncelle
     });
 
     document.getElementById('typeFilter').addEventListener('change', () => {
         populateFacilityNameFilter();
+        populateUnitFilter();
     });
 
     // Focus map when a specific facility is selected from the dropdown
     document.getElementById('facilityNameFilter').addEventListener('change', (e) => {
         const facilityId = e.target.value;
+        // ASM seçilince birimleri güncelle
+        populateUnitFilter();
         if (facilityId) {
             viewFacility(facilityId);
         }
@@ -1189,6 +1227,11 @@ function setupEventListeners() {
             const facilityId = selectedOption?.dataset?.facilityId;
             const unitCode = selectedOption?.textContent;
             if (facilityId) {
+                // Tesis adı filtresini de seçili ASM'ye çek
+                const facilityNameFilter = document.getElementById('facilityNameFilter');
+                if (facilityNameFilter && facilityId) {
+                    facilityNameFilter.value = facilityId;
+                }
                 focusOnUnitFacility(facilityId, unitCode);
             }
         });

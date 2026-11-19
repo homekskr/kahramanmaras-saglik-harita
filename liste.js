@@ -218,6 +218,52 @@ function populateFilters() {
         option.textContent = facility.name;
         facilityFilter.appendChild(option);
     });
+
+    // Birim filtresi (unitFilter)
+    populateUnitFilterList();
+}
+
+// Birim dropdown'unu doldur
+function populateUnitFilterList(facilityId = '', districtId = '') {
+    const unitFilter = document.getElementById('unitFilter');
+    if (!unitFilter) return;
+
+    const allUnitsCache = window._listUnitsCache || {};
+    unitFilter.innerHTML = '<option value="">Tüm Birimler</option>';
+
+    if (facilityId) {
+        // Belirli bir ASM'nin birimleri
+        const facility = allFacilities.find(f => f.id == facilityId);
+        const isASM = facility && (facility.facility_type_name || '').toUpperCase() === 'AİLE SAĞLIĞI MERKEZİ';
+        if (isASM) {
+            const units = allUnitsCache[facilityId] || facility.units || [];
+            units.forEach(unit => {
+                const option = document.createElement('option');
+                option.value = unit.id;
+                option.dataset.facilityId = facilityId;
+                option.textContent = unit.unit_code;
+                unitFilter.appendChild(option);
+            });
+        }
+    } else {
+        // Tüm ASM'lerin birimleri (districtId varsa o ilçedekiler)
+        const asmFacilities = allFacilities.filter(f => {
+            const isASM = (f.facility_type_name || '').toUpperCase() === 'AİLE SAĞLIĞI MERKEZİ';
+            const matchDistrict = !districtId || f.district_id == districtId;
+            return isASM && matchDistrict;
+        });
+
+        asmFacilities.forEach(fac => {
+            const units = allUnitsCache[fac.id] || fac.units || [];
+            units.forEach(unit => {
+                const option = document.createElement('option');
+                option.value = unit.id;
+                option.dataset.facilityId = fac.id;
+                option.textContent = `${unit.unit_code} (${fac.name})`;
+                unitFilter.appendChild(option);
+            });
+        });
+    }
 }
 
 // Event listener'lar
@@ -236,6 +282,7 @@ function setupEventListeners() {
     districtFilter.addEventListener('change', () => {
         updateTypeFilter();
         updateFacilityFilter();
+        populateUnitFilterList('', districtFilter.value);
         applyFilters(); // Otomatik filtrele
     });
 
@@ -245,8 +292,18 @@ function setupEventListeners() {
     });
 
     facilityFilter.addEventListener('change', () => {
+        // ASM seçilince birimleri güncelle
+        populateUnitFilterList(facilityFilter.value, districtFilter.value);
         applyFilters(); // Otomatik filtrele
     });
+
+    // Unit filter değişince otomatik filtrele
+    const unitFilter = document.getElementById('unitFilter');
+    if (unitFilter) {
+        unitFilter.addEventListener('change', () => {
+            applyFilters();
+        });
+    }
 
     // Akıllı arama - debounced
     let searchTimeout;
@@ -330,12 +387,28 @@ function applyFilters() {
     const searchQuery = document.getElementById('searchInput').value.trim();
     const queryLower = searchQuery.toLocaleLowerCase('tr-TR');
 
+    // Birim filtresi (eğer varsa)
+    const unitFilter = document.getElementById('unitFilter');
+    const selectedUnitId = unitFilter ? unitFilter.value : '';
+
     filteredFacilities = allFacilities.filter(facility => {
         const matchesDistrict = !districtId || facility.district_id == districtId;
         const matchesType = !typeId || facility.facility_type_id == typeId;
         const matchesFacility = !facilityId || facility.id == facilityId;
 
-        if (!matchesDistrict || !matchesType || !matchesFacility) {
+        // Birim seçilmişse: o birimin ait olduğu ASM'yi bul
+        let matchesUnit = true;
+        if (selectedUnitId) {
+            const allUnits = window._listUnitsCache || {};
+            // Tüm birimlerde ara
+            let foundFacilityId = null;
+            Object.entries(allUnits).forEach(([fId, units]) => {
+                if (units.some(u => u.id == selectedUnitId)) foundFacilityId = fId;
+            });
+            matchesUnit = foundFacilityId && facility.id == foundFacilityId;
+        }
+
+        if (!matchesDistrict || !matchesType || !matchesFacility || !matchesUnit) {
             facility._matchingUnits = [];
             return false;
         }
@@ -373,10 +446,13 @@ function clearFilters() {
     document.getElementById('typeFilter').value = '';
     document.getElementById('facilityFilter').value = '';
     document.getElementById('searchInput').value = '';
+    const unitFilter = document.getElementById('unitFilter');
+    if (unitFilter) unitFilter.value = '';
 
     // Tüm dropdown'ları yeniden doldur
     updateTypeFilter();
     updateFacilityFilter();
+    populateUnitFilterList(); // Tüm birimleri yeniden yükle
 
     allFacilities.forEach(f => {
         f._matchingUnits = [];

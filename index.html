@@ -45,7 +45,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/style.css?v=2.2">
     <link rel="stylesheet" href="/assets/css/lightbox.css">
 </head>
 
@@ -72,12 +72,19 @@
     <div class="main-container">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <!-- Navigation Section -->
+            <!-- Search Section - EN ÜSTTE -->
+            <div class="sidebar-section search-top-section">
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Tesis veya Birim Ara (Örn: 46.01.001, Afşin 001)..." autocomplete="off">
+                    <button class="search-btn-inline" onclick="searchFacility()" title="Ara">🔍</button>
+                    <div id="searchSuggestions" class="search-suggestions"></div>
+                </div>
+            </div>
 
             <!-- Filters Section -->
-            <div class="sidebar-section">
+            <div class="sidebar-section filters-compact">
                 <!-- District Filter -->
-                <div class="form-group">
+                <div class="form-group form-group-compact">
                     <label for="districtFilter">İlçe</label>
                     <select id="districtFilter">
                         <option value="">Tüm İlçeler</option>
@@ -85,7 +92,7 @@
                 </div>
 
                 <!-- Facility Type Filter -->
-                <div class="form-group">
+                <div class="form-group form-group-compact">
                     <label for="typeFilter">Sağlık Tesisi Türü</label>
                     <select id="typeFilter">
                         <option value="">Tüm Sağlık Tesisi Türleri</option>
@@ -93,7 +100,7 @@
                 </div>
 
                 <!-- Facility Name Filter -->
-                <div class="form-group">
+                <div class="form-group form-group-compact">
                     <label for="facilityNameFilter">Sağlık Tesisi Adı</label>
                     <select id="facilityNameFilter">
                         <option value="">Sağlık Tesisi Seçiniz</option>
@@ -101,7 +108,7 @@
                 </div>
 
                 <!-- Family Health Unit Filter (Aile Hekimliği Birimi) -->
-                <div class="form-group" id="unitFilterGroup">
+                <div class="form-group form-group-compact" id="unitFilterGroup">
                     <label for="unitFilter">Aile Hekimliği Birimi</label>
                     <select id="unitFilter">
                         <option value="">Aile Hekimliği Birimi Seçiniz</option>
@@ -118,22 +125,9 @@
                 </div>
             </div>
 
-            <!-- Search Section -->
-            <div class="sidebar-section">
-                <div class="search-container">
-                    <div class="form-group">
-                        <input type="text" id="searchInput" placeholder="Tesis veya Birim Ara (Örn: 46.01.001, Afşin 001)..." autocomplete="off">
-                    </div>
-                    <div id="searchSuggestions" class="search-suggestions"></div>
-                </div>
-                <button class="btn btn-primary btn-sm" onclick="searchFacility()">
-                    Ara
-                </button>
-            </div>
-
             <!-- Navigation Section -->
-            <div class="sidebar-section" style="border-bottom: none;">
-                <a href="/liste.html" class="btn btn-primary">
+            <div class="sidebar-section nav-compact">
+                <a href="/liste.html" class="btn btn-primary btn-sm">
                     📋 Tüm Sağlık Tesisleri
                 </a>
             </div>
@@ -151,7 +145,6 @@
                     </div>
                 </div>
             </div>
-
 
         </aside>
 
